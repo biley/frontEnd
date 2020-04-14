@@ -74,6 +74,9 @@
       margin: -50px 0 0 -150px;
     }
     ````
+参考：
+- https://www.w3cplus.com/css/centering-css-complete-guide.html
+
 ---
 ### 2. 盒模型(Box Model)
 
@@ -86,10 +89,8 @@
 
 所以主要区别在于一个content 的宽直接由 width 确定，另一个既使设置了 width 也还会受到 padding 和 border 影响
 
-
 参考：
 - https://juejin.im/entry/5a69b5f16fb9a01c96585601
-- https://www.w3cplus.com/css/centering-css-complete-guide.html
 
 ---
 ### 3. 使用 js 获取元素宽高
