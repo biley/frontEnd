@@ -7,6 +7,10 @@
 - [3. 使用 js 获取元素宽高](#3-%e4%bd%bf%e7%94%a8-js-%e8%8e%b7%e5%8f%96%e5%85%83%e7%b4%a0%e5%ae%bd%e9%ab%98)
 - [4. 画三角形](#4-%e7%94%bb%e4%b8%89%e8%a7%92%e5%bd%a2)
 - [5. 清除浮动](#5-%e6%b8%85%e9%99%a4%e6%b5%ae%e5%8a%a8)
+- [6. 网页布局](#6-%e7%bd%91%e9%a1%b5%e5%b8%83%e5%b1%80)
+- [7. BFC](#7-bfc)
+- [9. media](#9-media)
+- [8. 栅格](#8-%e6%a0%85%e6%a0%bc)
 
 ***
 ### 1. 居中
@@ -128,9 +132,9 @@
 ### 5. 清除浮动
 float 属性的初衷： 让文字环绕图片显示。使元素脱离文档流，按照指定方向移动，遇到父级边界或者相邻的浮动元素时停止。
 
-清楚浮动原因：
+清楚浮动原因()：
 
-1. 文字会围绕浮动元素排版。若想要文字排列在浮动元素下方，或不希望文字两边有浮动元素存在，则需要清楚浮动。
+1. 文字会围绕浮动元素排版。若想要文字排列在浮动元素下方，或不希望文字两边有浮动元素存在，则需要清除浮动。
 2. 浮动会导致父元素高度塌缩。
 3. 浮动元素在父元素高度塌缩后，甚至会影响到父元素的兄弟元素的排版。
 
@@ -152,3 +156,52 @@ float 属性的初衷： 让文字环绕图片显示。使元素脱离文档流�
 
 参考：
 - https://juejin.im/post/59e7190bf265da4307025d91
+
+---
+### 6. 网页布局
+网页布局一般可以分成3种：
+- 普通流：`inline`, `block`;
+- 定位流：`position`, `z-index`;
+- 浮动流：`float`;
+
+---
+### 7. BFC
+Block Formatting Context(块级格式化上下文)，是一个独立的渲染区域，它规定了内部的 block box 如何布局，且该布局不会影响到外部。
+
+形成 BFC 的条件：
+1. 浮动元素，`float` 除了 `none` 以外的值;
+2. 定位元素，`position` 值不为 `relative/static`;
+3. `display: inline-block/table-cell/table-cation`;
+4. `overflow` 除了 `visible` 以外的值;
+
+BFC 特性：
+1. 内部的 block box 在垂直方向逐个放置，即使是浮动元素也会接着上一个盒子垂直排列(会受到上一个盒子的 `padding` 和 `margin` 影响)。这个特性可以清除浮动，使父元素包裹浮动元素，不会塌缩，也不会影响外部元素，但对文字环绕效果没有影响。
+2. 内部的 box 会发生 `margin` 重叠。(`inline` 元素宽高设置无效，竖直方向的 `margin`, `padding` 设置无效)。
+3. 不被浮动元素覆盖
+   - 两栏布局：左边float, 右边 BFC 宽度自适应。
+   - 三栏布局：左右float, 中间 BFC 宽度自适应(这里要注意元素排列顺序应该是：<left/></right></middle>)。
+   - 防止字体环绕。与 clear 的区别在于将字体块设置为 BFC, 二者依然在同一行; 使用 clear, 则二者会换行。
+4. 不会影响到外部区域，可以用来清除 margin 重叠：若两个相邻元素发生了 margin 重叠，则将其中一个放到 BFC 容器中即可。
+参考：
+- https://juejin.im/post/5c7e142d6fb9a049c9666b23
+
+---
+### 9. media
+
+使用 media, 可以针对不同的媒体类型定义不同的样式，在响应式页面设计方面非常有用。
+
+早在 CSS2 开始就已经支持 media, 具体用法是在 head 标签中插入`<link>`标签，这种方法最大的问题是会增加 http 的请求次数;用 CSS3 把样式都写在一个文件中才是最佳的方法
+CSS3 中
+
+CSS3 中使用的语法为：
+```CSS
+@media mediatype and|not|only (media fature) {
+  ...
+}
+```
+mediatype 多数已废弃，现有all/print/screen/speech;
+mdeia feature 值很多，color/device-width/device-height/max-device-width/max-resolution 等
+
+---
+### 8. 栅格
+通过给父元素设置 font-size: 0 来去掉两个 inline-block 之间的距离
