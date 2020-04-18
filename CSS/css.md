@@ -199,9 +199,57 @@ CSS3 中使用的语法为：
   ...
 }
 ```
-mediatype 多数已废弃，现有all/print/screen/speech;
-mdeia feature 值很多，color/device-width/device-height/max-device-width/max-resolution 等
+`mediatype` 多数已废弃，现有`all/print/screen/speech`;
+`mdeia feature` 值很多，`color/device-width/device-height/max-device-width/max-resolution` 等。
 
 ---
 ### 8. 栅格
-通过给父元素设置 font-size: 0 来去掉两个 inline-block 之间的距离
+
+`float`, `inline-block`, `display: table`, `display: flex` 都可以实现栅格布局。
+
+可以在加上 @media 实现响应式布局
+
+实现:
+1. 一个基本的栅格布局，包含 container, rows, columns, gutters。容器 containr 的宽度通常为 100%;
+
+   - 通过浮动来制作栅格系统，行元素使用伪元素来`清除浮动`，防止列元素溢出到其他行。
+   - 若列是空的，浮动的列顶部会重叠，所以为列设置 `min-height: 1px;`
+   - 根据容器宽度 100%, 除以一行总列数得到单行宽度，可以得到各个列样式(`.col-1, .col-2` ...)宽度
+   - 列宽固定，设置盒模型为 `border-box`, 用 `padding` 作为间隙gutter
+
+    代码实现：
+    ```CSS
+    .container {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .row:after {
+      content:"";
+      display: block;
+      clear:both;
+    }
+
+    .col-($num) {
+      float: left;
+      min-height: 1px;
+      width: ($num * singWidth);
+      padding: 12px;
+    }
+    ```
+2. 栅格化的主要目的是把平面分成有规律的一系列格子，并借此来进行有规律的版面布局。
+   - 通过 inline-block 来布局，通过给父元素设置。 `font-size: 0` 来[去掉两个 `inline-block` 之间的距离](https://www.zhangxinxu.com/wordpress/2012/04/inline-block-space-remove-%E5%8E%BB%E9%99%A4%E9%97%B4%E8%B7%9D/)。
+   - 根据容器宽度 100%, 除以一行总列数得到单行宽度，可以得到各个列样式(`.col-1, .col-2` ...)宽度。
+   - 列宽固定，设置盒模型为 `border-box`, 用 `padding` 作为间隙gutter。
+   - [inline-block根据内容不同会有垂直对齐问题](https://www.jianshu.com/p/9e0274e0f9bd)，所以设置 `vertical-align: top` 顶部对齐。
+    ```CSS
+      .container {
+        font-size: 0;
+        box-sizing: border-box;
+      }
+      .col-($num) {
+        vertical-align: top;
+        width: ($num * singWidth);
+        padding: 12px;
+      }
+    ```
