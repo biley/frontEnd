@@ -11,6 +11,8 @@
 - [7. BFC](#7-bfc)
 - [9. media](#9-media)
 - [8. 栅格](#8-%e6%a0%85%e6%a0%bc)
+- [9. flex box](#9-flex-box)
+- [9 transform](#9-transform)
 
 ***
 ### 1. 居中
@@ -253,3 +255,60 @@ CSS3 中使用的语法为：
         padding: 12px;
       }
     ```
+### 9. flex box
+设为 flex 布局之后，子元素的 float、clear和vertical-align属性将失效。
+
+容器:
+```CSS
+{
+  display: flex;
+  flex-direction: row/row-reverse/column/column-reverse;
+  flex-wrap: nowrap/wrap/wrap-reverse;
+  flex-flow: flex-direction flex-wrap;
+  justify-content: flex-start/flex-end/center/space-between/space-around;
+  align-items: flex-start/flex-end/center/baseline/stretch;
+  align-content: flex-start/flex-end/center/space-between/space-around/stretch;  /*定义多根轴线的对齐方式*/
+}
+```
+项目：
+```CSS
+{
+  order: integer; /*项目排列顺序，数值越小，排列越靠前*/
+  flex-grow: number(default: 0);
+  flex-shrink: number(default: 1);
+  flex-basis: length/auto;
+  flex: flex-grow flex-shrink flex-basis; /*简写，后两个属性可选*/
+  align-self: auto/flex-start/flex-end/center/baseline/stretch;
+
+}
+```
+flex-grow 定义项目放大比例：
+- 默认0,不放大;
+- 所有项目都为1, 等分剩余空间;
+- 一个为2,其他都为1,则前者占据空间比其他多一倍;
+- 一个为1, 其他都为0,占据所有剩余空间
+
+flex-shrink 定义项目的缩小比例：
+- 默认1,若空间不足，项目等比缩小
+- 一个为0, 其他为1, 则空间不足时前者不缩小
+- 负值无效
+
+`flex-basis`: 定义在分配多余空间之前，项目占据的主轴空间。浏览器根据该属性计算主轴是否有多余空间:
+- 默认`auto`,即项目的本来大小
+- length(350px),项目占据固定空间
+- 若不使用 `box-sizing` 改变盒模型，该属性决定了 flex 元素的内容盒(content box)的 size
+- `flex-basis` 和 `width`(或是 `flex-basis`, `flex-direction: column`, `height`同时设置)， `flex-basis` 优先级更高
+
+flex是简写形式，后两个属性可选：
+- 默认 0 1 auto;
+- auto (1 1 auto);
+- none (0 0 auto);
+
+align-self 定义单个项目的对齐方式：
+- 默认 auto,表示继承父元素的 align-items; 若无，则为 stretch
+- 可覆盖父元素的 align-items
+
+参考：
+- [flex布局教程：语法篇](https://www.ruanyifeng.com/blog/2015/07/flex-grammar.html)
+
+### 9 transform
