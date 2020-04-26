@@ -189,7 +189,41 @@ SubType.prototype = new SuperType();
 //SubType.prototype.constructor = SubType;
 ```
 ##### 4.4 原型式继承
+原型式继承并没有严格意义上的构造函数，其想法是借助原型可以基于已有的对象创建新对象，同时还不必因此创建自定义类型。
+```JS
+function object(o) {
+  function F() {}
+  f.prototype = 0;
+  return new F();
+}
+```
+这种对象要求有一个对象作为另一个对象的基础。ECMAScript5 新增 `Object.create(object, options)` 方法规范化了原型式继承，其中参数 options 可选，它与 Object.defineProperties() 的第二个参数格式相同，它指定的属性会覆盖原型对象上的同名属性。
 
+##### 4.5 寄生式继承
+寄生式继承的思路与寄生构造函数和工厂模式类似，即创建一个仅用于封装继承过程的函数。该函数在内部以某种方式来增强对象，最后再像真是它做了所有的工作一样返回对象。
+```JS
+function createAnother(original) {
+  var clone = Object.create(original);
+  clone.sayHello = function() {};
+  return clone;
+}
+```
+在主要考虑对象而不是自定义类型和构造函数的情况下，寄生式继承也是一种有用的模式; `Object.create()` 不是必须的，任何能返回新对象的函数都适用于此模式。该模式为对象添加的函数也不能做到函数复用。
+
+##### 4.6 寄生组合式继承
+
+JS中最常用组合继承最大的问题是无论什么情况下，都会调用两次超类构造函数：第一次在创建子类原型的时候，第二次在子类构造函数内部。
+
+寄生组合式继承通过借用构造函数来继承属性，通过原型链的混成形式来继承方法。其背后的思路是：不必为了指定子类型的原型而调用超类型的构造函数，需要的只是超类型原型的一个副本。本质上，就是使用寄生式继承来继承超类的原型，然后再将结果指定给子类型的原型：
+```JS
+//使用 inheritPrototype 来替代组合继承中，子类的原型指向超类实例的部分
+function inheritPrototype(subType, superType) {
+  var prototype = Object.create(superType.prototype);
+  prototype.constructor = subType;
+  subType.prototype = prototype;
+}
+```
+该模式只调用一次超类构造函数，因此避免了在子类原型上创建多余的属性，同时原型链保持不变，instanceof 和 isPrototypeOf() 都能正常使用，开发人员普遍认为这是引用类型最理想的继承范式。
 
 ### 5. 垃圾收集
 JS 具有自动垃圾收集机制，其原理就是找出那些不再继续使用的变量，然后释放其内存，垃圾收集器会按照固定的时间间隔(或代码执行中预定的时间)周期性的执行这一操作。
