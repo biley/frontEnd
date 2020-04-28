@@ -9,8 +9,8 @@
 - [5. 清除浮动](#5-%e6%b8%85%e9%99%a4%e6%b5%ae%e5%8a%a8)
 - [6. 网页布局](#6-%e7%bd%91%e9%a1%b5%e5%b8%83%e5%b1%80)
 - [7. BFC](#7-bfc)
-- [9. media](#9-media)
-- [8. 栅格](#8-%e6%a0%85%e6%a0%bc)
+- [8. media](#8-media)
+- [9. 栅格](#9-%e6%a0%85%e6%a0%bc)
 - [9. flex box](#9-flex-box)
 - [9 transform](#9-transform)
 
@@ -22,7 +22,7 @@
 
 `block` 元素中的行内元素，只需使用 `text-align: center`；
 
-该方法可以让 `inline/inline/block/inline-table/flex` 等类型的元素实现水平居中。
+该方法可以让 `inline/inline-block/inline-table/flex` 等类型的元素实现水平居中。
 
 **块级元素**
 
@@ -38,7 +38,8 @@
 1. 行内元素的垂直对齐，如一行文字中的`<img>`垂直对齐。
 2. 表格单元格中内容的垂直对齐。
 
-对父容器使用 `display: table-cell; vertical-align: middle`使其内的子元素实现垂直居中
+对父容器使用 `display: table-cell; vertical-align: middle`使其内的子元素实现垂直居中。
+
 使用伪元素：(利用 伪元素的 `display` 和 `height` 完成设置元素所在行的基线，相当于调整 `vertical-align` 的相对坐标)
 ```CSS
 .parent:before {
@@ -113,7 +114,7 @@
 1. `dom.style(.width/height)` 只能获取内联样式,也可设置
 2. ~~`dom.currentStyle(.width/height)` 仅 IE 支持，**Non-standard**~~
 3. `window.getComputedStyle(dom)(.width/height)` 返回的是一个**实时**的 `CSSStyleDeclaration` 对象，**只读**
-4. `dom.getBoundingClientRect()`返回 element 的 size 和 相对与视窗的位置。其中在 content-box 中 size 为: width/height + padding; 而在 box-sizing 中 size 则是 width/height。
+4. `dom.getBoundingClientRect()`返回 element 的 size 和 相对于视窗的位置。其中在 content-box 中 size 为: width/height + padding; 而在 box-sizing 中 size 则是 width/height。
 5. `dom.clientWidth/clientHeight` inline 元素(以及无 CSS 样式的元素) `clientWidth/clientHeight` 为0。`clientWidth/clientHeight = content + padding (- 滚动条)`； 只读。
 6. `dom.offsetWidth/offsetHeight` 返回元素的布局位置，`offsetWidth/offsetHeight = content + padding + border + 滚动条`，被隐藏则返回0； 只读。
 
@@ -188,12 +189,11 @@ BFC 特性：
 - https://juejin.im/post/5c7e142d6fb9a049c9666b23
 
 ---
-### 9. media
+### 8. media
 
 使用 media, 可以针对不同的媒体类型定义不同的样式，在响应式页面设计方面非常有用。
 
 早在 CSS2 开始就已经支持 media, 具体用法是在 head 标签中插入`<link>`标签，这种方法最大的问题是会增加 http 的请求次数;用 CSS3 把样式都写在一个文件中才是最佳的方法
-CSS3 中
 
 CSS3 中使用的语法为：
 ```CSS
@@ -205,7 +205,7 @@ CSS3 中使用的语法为：
 `mdeia feature` 值很多，`color/device-width/device-height/max-device-width/max-resolution` 等。
 
 ---
-### 8. 栅格
+### 9. 栅格
 
 `float`, `inline-block`, `display: table`, `display: flex` 都可以实现栅格布局。
 
@@ -216,7 +216,7 @@ CSS3 中使用的语法为：
 
    - 通过浮动来制作栅格系统，行元素使用伪元素来`清除浮动`，防止列元素溢出到其他行。
    - 若列是空的，浮动的列顶部会重叠，所以为列设置 `min-height: 1px;`
-   - 根据容器宽度 100%, 除以一行总列数得到单行宽度，可以得到各个列样式(`.col-1, .col-2` ...)宽度
+   - 根据容器宽度 100%, 除以一行总列数得到单列宽度，可以得到各个列样式(`.col-1, .col-2` ...)宽度
    - 列宽固定，设置盒模型为 `border-box`, 用 `padding` 作为间隙gutter
 
     代码实现：
