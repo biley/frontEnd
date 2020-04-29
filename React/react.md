@@ -51,8 +51,56 @@ React 可以在每个 action 后对整个应用进行重新渲染，这表示在
 2. 开发时，可以通过CSS来隐藏、显示结点，而不是真正的删除和添加DOM节点，保持稳定的DOM结构对性能的提升有帮助。
 3. Key 应该稳定，可预测且在列表内唯一。
 
+#### 3.生命周期
+每个组件都包含生命周期方法，具体可分为三个阶段：
+
+**挂载**
+当组件实例被创建并插入DOM时，其生命周期调用顺序：
+1. constructor()
+  
+  - 在React组件挂载之前，会调用它的构造函数。
+  - 若不初始化state(给this.state直接赋值，this.setState()方法在其他地方调用)或不进行方法绑定(为事件处理函数绑定实例)，则不需实现构造函数。
+  - 在为子类实现构造函数时，应在其他语句之前调用 super(props)。否则，在构造函数中 this.props　是 undefined, 可能导致一些bug。
+  - 避免将props 的值复制给state,除非是想刻意忽略相关prop更新。
+2. static getDerivedStateFromProps()、UNSAFE_componentWillMount()
+3. render()
+4. componentDidMount()
+   - 在组件挂载后(插入DOM树中)立即调用。
+   - 依赖于DOM节点的初始化应该放在这里;这里也很适合实例化网络请求;这里也比较适合添加订阅，不过要注意在 componentWillUnmount()中取消订阅。
+   - 可以在其中直接调用 setState(),这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前。这样保证了即使render()调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
+  
+
+**更新**
+- static getDerivedStateFromProps()、UNSAFE_componentWillReceiveProps()
+- shouldeComponentUpdate()
+- UNSAFE_componentWillUpdate()
+- render()
+- getSnapshotBeforeUpdate()
+- componentDidUpdate()
+
+**卸载**
+componentWillUnmount()
+
+**错误处理**
+- static getDerivedStateFromError()
+- componentDidCatch()
+
+
 ### 杂项
 babel 在编译时会判断 JSX 中组件的首字母，当首字母为小写是，认定其为DOM标签，createElement的第一个变量被编译为字符串;当首字母为大写时，认定其为自定义组件，createElement的第一个变量被编译为对象。
 
+JSX防止注入攻击，React 在渲染所有输入内容之前，默认会进行转义。所有内容在渲染之前都被转换成了字符串，这样可以有效地防止XSS(cross-site-scription)攻击。
+
+React.createElement() 创建的对象称为“React elements”(虚拟DOM?):
+```JS
+//简化后的形式
+const element = {
+  type: 'div',
+  props: {
+    className: 'container',
+    children: 'Hello, world!'
+  }
+}
+```
 
 concurrent mode   SSR  web worker
