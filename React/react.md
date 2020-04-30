@@ -53,33 +53,53 @@ React 可以在每个 action 后对整个应用进行重新渲染，这表示在
 
 #### 3.生命周期
 每个组件都包含生命周期方法，具体可分为三个阶段：
-
+![lifecycle-16.4](/Image/lifecycle-16.4.png)
+16.4 和 16.3 的生命周期有部分区别：
+![lifecycle-16.3](/Image/lifecycle-16.3.png)
 **挂载**
 当组件实例被创建并插入DOM时，其生命周期调用顺序：
-1. constructor()
+1. **`constructor()`**
   
-  - 在React组件挂载之前，会调用它的构造函数。
-  - 若不初始化state(给this.state直接赋值，this.setState()方法在其他地方调用)或不进行方法绑定(为事件处理函数绑定实例)，则不需实现构造函数。
-  - 在为子类实现构造函数时，应在其他语句之前调用 super(props)。否则，在构造函数中 this.props　是 undefined, 可能导致一些bug。
-  - 避免将props 的值复制给state,除非是想刻意忽略相关prop更新。
-2. static getDerivedStateFromProps()、UNSAFE_componentWillMount()
-3. render()
-4. componentDidMount()
+   - 在React组件挂载之前，会调用它的构造函数。
+   - 构造函数一般只做两件事：初始化 `state` (给 `this.state` 直接赋值，`this.setState()` 方法在其他地方调用)或进行方法绑定(为事件处理函数绑定实例)，否则则不需实现构造函数。
+   - 在为子类实现构造函数时，应在其他语句之前调用 `super(props)`。否则，在构造函数中 `this.props`　是 undefined, 可能导致一些bug。
+   - 避免将 `props` 的值复制给 `state`,除非是想刻意忽略相关prop更新。
+2. `static getDerivedStateFromProps()`、`UNSAFE_componentWillMount()`
+3. **`render()`**
+   - render 被调用时，会检查 `this.props` 和 `this.state` 的变化并返回以下类型之一：React element(通常通过JSX创建)、数组或fragments、protals、字符串或数值类型、布尔类型或null。
+   - render 函数应该是纯函数，这意味着在不修改组件state的情况下，每次调用都返回相同的结果，且不会直接与浏览器交互(一般在`componentDidMount()` 或其他生命周期中执行)。
+   - 若 `shouldComponentUpdate()` 返回false, 则不会调用 `render()`;
+4. **`componentDidMount()`**
    - 在组件挂载后(插入DOM树中)立即调用。
-   - 依赖于DOM节点的初始化应该放在这里;这里也很适合实例化网络请求;这里也比较适合添加订阅，不过要注意在 componentWillUnmount()中取消订阅。
-   - 可以在其中直接调用 setState(),这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前。这样保证了即使render()调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
+   - 依赖于DOM节点的初始化应该放在这里;这里也很适合实例化网络请求;这里也比较适合添加订阅，不过要注意在 `componentWillUnmount()` 中取消订阅。
+   - 可以在其中直接调用 `setState()`,这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前。这样保证了即使 `render()` 调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
   
 
 **更新**
-- static getDerivedStateFromProps()、UNSAFE_componentWillReceiveProps()
-- shouldeComponentUpdate()
-- UNSAFE_componentWillUpdate()
-- render()
-- getSnapshotBeforeUpdate()
-- componentDidUpdate()
+1. static getDerivedStateFromProps()、UNSAFE_componentWillReceiveProps()
+   - 该方法在调用 render 方法之前调用，且在初始挂载及后续更新时都会被调用。
+2. `shouldeComponentUpdate()`
+   - 当 props　或 state 变化时，该方法在渲染执行之前被调用，返回值默认为 true。首次渲染或使用 forceUpdate() 时不会调用该方法。
+   - 根据该方法的返回值，判断 React 组件的输出是否受当前 state 或 props　更改的影响，默认每次更改都会重新渲染。
+   - 此方法仅作为性能优化的方式而存在，不要依靠它来阻止渲染，这可能产生bug,返回 false 时，仍可能导致组件重新渲染。
+   - 应该考虑内置的 pureComponent(而不是手动编写 `shouldeComponentUpdate()`), 它会对props和state进行浅层比较，并减少了跳过必要跟新的可能性)。
+   - 不建议在该方法中进行深层比较或使用 JSON.stringify()。这样非常影响效率，且会损害性能。
+   - 目前，若该方法返回 false, 则不会调用 `UNSAFE_componentWillUpdate()`, `render()` 和 `componentDidUpdate()`
+3. UNSAFE_componentWillUpdate()
+4. **`render()`**
+5. getSnapshotBeforeUpdate()
+6. **`componentDidUpdate()`**
+   - 在更新后立即被调用
+   - 组件更新后，可以在此处对DOM进行操作。若对更新前后的props进行了比较，也可以选择在此处进行网络请求。
+   - 可以在其中直接调用 `setState()`,但必须包裹在一个条件语句中，否则会导致死循环。它还会导致额外的重新渲染，虽然用户不可见，但会影响组件性能。[不要将props 镜像给 state, 可以考虑直接使用 props](https://zh-hans.reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html)
+   - 若组件实现了　`getSnapshotBeofreUpdate()` 生命周期，则它的返回值将作为 `componentDidUpate()` 的第三个参数“snapshot”参数传递，否则此参数为 undefined。
+   - 若 `shouleComponentUpdate()` 返回值为 false, 则不会调用 `componentDidUpdate()`;
 
 **卸载**
-componentWillUnmount()
+1. componentWillUnmount()
+   - 在组件卸载及销毁之前直接调用。
+   - 在此方法中执行必要的清理操作，如清除 timer,取消网络请求或清楚在 componentDidMount() 中创建的订阅等。
+   - 不应在此方法中在调用 setstate(), 因为该组件永远不会重新渲染;组件实例卸载后，也将永远不会再挂载它。
 
 **错误处理**
 - static getDerivedStateFromError()
@@ -91,7 +111,7 @@ babel 在编译时会判断 JSX 中组件的首字母，当首字母为小写是
 
 JSX防止注入攻击，React 在渲染所有输入内容之前，默认会进行转义。所有内容在渲染之前都被转换成了字符串，这样可以有效地防止XSS(cross-site-scription)攻击。
 
-React.createElement() 创建的对象称为“React elements”(虚拟DOM?):
+`React.createElement()` 创建的对象称为“React elements”(虚拟DOM?):
 ```JS
 //简化后的形式
 const element = {
@@ -102,5 +122,7 @@ const element = {
   }
 }
 ```
+
+Fragments：　`<React.Fragment></React.Fragement>` 允许将子列表分组，而无需向DOM添加额外节点，key是唯一可以传递给Fragment的属性。还可以使用更简短的语法来生命 Fragments: `<></>`,但这样的写法不支持 key。
 
 concurrent mode   SSR  web worker
