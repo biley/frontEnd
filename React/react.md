@@ -65,8 +65,8 @@ React 可以在每个 action 后对整个应用进行重新渲染，这表示在
    - 构造函数一般只做两件事：初始化 `state` (给 `this.state` 直接赋值，`this.setState()` 方法在其他地方调用)或进行方法绑定(为事件处理函数绑定实例)，否则则不需实现构造函数。
    - 在为子类实现构造函数时，应在其他语句之前调用 `super(props)`。ES6 class 继承不调用 super() 创建实例时会直接报错; 在调用 super() 之前也无法在构造函数中使用 this；super 的参数 props 可以使基类 React.Component 初始化 this.props, 若不传则 React 会在组件实例化的时候设置一遍 props，这样做就无法在构造函数中使用 this.props。
    - 避免将 `props` 的值复制给 `state`,除非是想刻意忽略相关prop更新。
-2. `static getDerivedStateFromProps()`、
-   - 该方法在调用 render 之前调用，且在挂载和后续更新时都会被调用。他应该返回一个对象来更新 state, 若返回 null 则不会更新任何内容。
+2. `static getDerivedStateFromProps(props, state)`、
+   - 该方法在调用 render 之前调用，且在挂载和后续更新(注意包含父级重新渲染)时都会被调用。他应该返回一个对象来更新 state, 若返回 null 则不会更新任何内容。
    - 该方法仅适用于一些罕见用例，即 state 的值在任何时候都取决于 props。
    - 该方法会导致代码冗余，并使组件难以维护。使用前先考虑替代方案：
      1. 若需要执行 side effects(数据获取或动画)来响应 props 中的更改，使用 `componentDidUpdate()`。
@@ -89,7 +89,7 @@ React 可以在每个 action 后对整个应用进行重新渲染，这表示在
   
 
 **更新**
-1. static getDerivedStateFromProps()
+1. static getDerivedStateFromProps(props, state)
    
    `UNSAFE_componentWillReceiveProps()`
    - 此方法仅在父组件重新渲染时触发，而不是因为内部的 setState。此方法会在已挂载的组件接受新的 props 之前被调用，若需要更新state 来响应 props 更改,则可以比较this.props和nextProps 并在方法中使用 `this.setState()` 来执行 state 转换。
@@ -107,7 +107,7 @@ React 可以在每个 action 后对整个应用进行重新渲染，这表示在
    - 不应该在此方法中执行 `this.setState()`; 在此方法返回之前，也不应该执行任何其他操作(如dispatch Redux 的 action)触发对React 组件的更新。
    - 若shouldComponentUpdate() 返回 false, 则不会调用此方法。
 4. **`render()`**
-5. getSnapshotBeforeUpdate()
+5. `getSnapshotBeforeUpdate(prevProps, prevState)`
    - 此方法在最近一次渲染输出(提交到DOM节点)之前调用。它使得组件能在发生更改之前从DOM中捕获一些信息(如滚动位置)。此方法的返回值将作为参数传递给 `componentDidUpdate()`。
 6. **`componentDidUpdate()`**
    - 在更新后立即被调用
@@ -155,5 +155,7 @@ const element = {
 ```
 
 Fragments：　`<React.Fragment></React.Fragement>` 允许将子列表分组，而无需向DOM添加额外节点，key是唯一可以传递给Fragment的属性。还可以使用更简短的语法来生命 Fragments: `<></>`,但这样的写法不支持 key。
+
+purecomponent 只会在 state 或者 props 的值变化时才会再次渲染，因此父组件的渲染不一定引起子组件 purecomponent的渲染。
 
 concurrent mode   SSR  web worker
