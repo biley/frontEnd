@@ -92,7 +92,7 @@ react 16.3之前：
 4. **`componentDidMount()`**
    - 在组件挂载后(插入DOM树中)立即调用。
    - 依赖于DOM节点的初始化应该放在这里;这里也很适合实例化网络请求;这里也比较适合添加订阅，不过要注意在 `componentWillUnmount()` 中取消订阅。
-   - 可以在其中直接调用 `setState()`,这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前。这样保证了即使 `render()` 调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
+   - 可以在其中直接调用 `setState()`,这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前(重新 diff 该子节点树？diff 是一个递归的过程，只有在所有子组件完成挂载之后，父组件的render函数才算结束，才能产生父组件的虚拟DOM)。这样保证了即使 `render()` 调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
   
 
 **更新**
@@ -174,6 +174,6 @@ purecomponent 只会在 state 或者 props 的值变化时才会再次渲染，�
 
 组件渲染：初始化，props或 state 变化，父组件渲染(reconcilation diff算法会递归所有子组件，这里可以通过 pureComponent或者 shouldComponentUpdate 避免重复渲染)
 
-setState　的同步与异步：　https://juejin.im/post/5b45c57c51882519790c7441#heading-7
+setState　的同步与异步：　https://juejin.im/post/5b45c57c51882519790c7441#heading-7  setState 是一个异步方法，一个生命周期中所有的 setState 方法会合并操作。
 
 concurrent mode   SSR  web worker　fiber的render和commit 　 setState和props的批量更新。
