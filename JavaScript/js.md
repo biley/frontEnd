@@ -355,7 +355,10 @@ JS 具有自动垃圾收集机制，其原理就是找出那些不再继续使�
 
 函数属于引用类型，单独保存在(堆)内存中，所以可以在不同的环境中执行。而作为一个单独的存在，它执行时的上下文也和具体的调用场景相关。
 
-关于this在理解原理的情况下，也可以使用一些更简单的方法来判断绑定的对象：[两句话理解js中的this](https://juejin.im/post/5a0d9ff4f265da432e5b91da)
+关于this在理解原理的情况下，也可以使用一些更简单的方法来判断绑定的对象：[两句话理解js中的this](https://juejin.im/post/5a0d9ff4f265da432e5b91da)、[彻底理解 js 中的 this,　不必硬背](https://www.cnblogs.com/pssp/p/5216085.html)
+
+为什么要使用 this，　this 指向 DOM　元素
+
 参考：
 - 《你不知道的JS》
 
@@ -383,7 +386,7 @@ bind 使用：
 6. 在某些情况下，通过检查传入函数中的参数类型和个数并做出不同的反应，可以模仿方法的重载。
 
 ajax fetch
-js 为什么单线程 块作用域 bind let const var this 原型链 构造 模式
+js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　
 
 杂项：
 在函数内部可以通过函数名来引用函数，对于匿名函数，唯一从内部引用自身的方式是使用 arguments.callee (已弃用)。
