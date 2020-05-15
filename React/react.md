@@ -16,6 +16,7 @@ const VitrualDom = {
 主流的虚拟DOM库，通常都有一个h函数，在React中也就是 `React.createElement`, JSX 只是 `React.createElement`的语法糖， React 通过 babel 将JSX转换为 `React.createElement`。
 
 ### 2. reconciliation
+"stack" reconciler 是 React15 及更早的解决方案；而 Filber 从 React 开始变成了默认的 reconciler， 但是 async 特性还没有默认开启。
 从某方面来看，我们可以认为 `render()` 函数创建了一个 react elements 的树;在下一次 `state` 或 `props` 更新时， 该 `render()` 函数会返回一个不同的树。React 需要基于这两棵树之间的差别来判断如何有效率的更新UI以保证当前UI与最新的树同步。
 
 这个算法问题有一些通用的解决方案，也就是生成将一棵树转换成另一棵树的最少操作。传统diff算法需要循环比较两棵树，所有结点的循环，单纯的比较次数就是O(n^2),找到差异后还要计算最小转换方式，最终结果为O(n^3);React 基于以下两个假设提出了一套O(n)的算法：
@@ -51,7 +52,7 @@ React 可以在每个 action 后对整个应用进行重新渲染，这表示在
 2. 开发时，可以通过CSS来隐藏、显示结点，而不是真正的删除和添加DOM节点，保持稳定的DOM结构对性能的提升有帮助。
 3. Key 应该稳定，可预测且在列表内唯一。
 
-#### 3.生命周期
+### 3. 生命周期
 每个组件都包含生命周期方法，具体可分为三个阶段：
 ![lifecycle-16.4](/Image/lifecycle-16.4.png)
 16.4 和 16.3 的生命周期有部分区别：
@@ -92,7 +93,7 @@ react 16.3之前：
 4. **`componentDidMount()`**
    - 在组件挂载后(插入DOM树中)立即调用。
    - 依赖于DOM节点的初始化应该放在这里;这里也很适合实例化网络请求;这里也比较适合添加订阅，不过要注意在 `componentWillUnmount()` 中取消订阅。
-   - 可以在其中直接调用 `setState()`,这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前。这样保证了即使 `render()` 调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
+   - 可以在其中直接调用 `setState()`,这样会触发额外渲染，但此渲染会发生在浏览器更新屏幕之前(重新 diff 该子节点树？diff 是一个递归的过程，只有在所有子组件完成挂载之后，父组件的render函数才算结束，才能产生父组件的虚拟DOM)。这样保证了即使 `render()` 调用了两次，用户也不会看到中间状态。这样使用可能会导致性能问题，如果渲染依赖于DOM节点的大小或位置(如实现 modals或tooltips),可以使用此方法。
   
 
 **更新**
@@ -136,7 +137,6 @@ error boundaries 是React组件，它会在其子组件树中的任何位置捕�
 
 Error boundaries 组件仅用来从意外异常中恢复的情况，不应该用于流程控制。Error boundaries 仅捕获组件树以下组件的错误，但它本身的错误无法捕获。
 
-
 1. `static getDerivedStateFromError(error)`
    - 此方法会在后代组件抛出错误后被调用，它将抛出的错误作为参数，并返回一个值以更新state。
    - 此方法会在渲染阶段调用，因此不允许出现副作用, 有这类需求改用 `componentDidCatch()`;
@@ -146,11 +146,169 @@ Error boundaries 组件仅用来从意外异常中恢复的情况，不应该用
      2. info —— 带有componentStack 的对象 
    - 此方法在 "commit" 阶段被调用，因此可以执行side effects。也可以在其中通过调用 `setState` 来渲染反馈UI，但在未来的版本中不推荐这样做，可以使用 `static getDerivedStateFromError()` 来处理。
 
+**父子组件生命周期执行顺序：**
+1. 子组件自身状态改变，不对父组件产生副作用的情况下，不会触发父组件生命周期。
+2. 父组件中状态发生变化时，会触发自身对应的生命周期以及子组件的更新:
+   - render 及其之前的生命周期，父组件先执行。
+   - render 之后的生命周期，子组件先执行，且与父组件交替执行。这里应该是与render 阶段、Pre-commit 阶段、Commit 阶段有关;在执行完子组件和父组件的 Pre-commit 阶段的生命周期后，才会执行子组件和父组件的 Commit 阶段的生命周期。
+
+*react生命周期介绍，怎么执行。说一下下面的组件生命周期执行顺序【描述】
+```
+<A> <B /> </A>
+a.willMount 3
+b.willMount 1
+a.didMount 4
+b.didMount 2
+```
+react16前是递归的，是这个顺序。react16后改成fiber架构，是反过来的了，没有像栈那样fifo*
+
 参考：
 - [三张图对比React组件生命周期](https://zhuanlan.zhihu.com/p/60168527)
+- [React 组件生命周期详解](https://juejin.im/post/5c4575626fb9a049ca37aac2)
+
+### 4. setState
+生命周期由 React 主动调用，而 `setState()` 和 `forceUpdate()` 则是开发者在组件中调用的方法。
+
+`setState` 并不总是立即更新组件，它会批量推迟更新。因此想要在调用 `setState()` 后立即读取 this.state，可以使用 `componentDidUpdate` 或者 `setState` 的回调函数(`setState(updater, callback)`)。
+
+`setState`(`setState(updater, callback)`)的使用：
+1. 参数 1 为带有形参的 updater 函数： `(state, props) => statechange`，其中 state 和 props 都**保证为最新**，该函数的返回值会与 state 进行浅合并。
+2. 参数 2 为可选的回调函数，它将在 `setState` 完成合并并重新渲染组件后执行，通常建议使用 `componentDidUpdate()` 来代替此方式。
+3. 参数 1 除了接收函数外，还可以接受对象类型。这种形式的 `setState()` 也是是异步的，并且在同一周期内会对多个 `setState()` 进行批处理，后调用的 `setState()` 将覆盖同一周期内先调用的 `setState()` 的值。若后续状态取决于当前状态，则建议使用 updater 函数的形式代替：
+   ```JS
+    constructor(props) {
+      super(props);
+      this.state = {
+        num: 1
+      };
+    }
+
+    //使用对象类型的参数，render 中 this.state.num 值为 2
+    handleClick() {
+      this.setState({ num: this.state.num + 1 });
+      this.setState({ num: this.state.num + 1 });
+      this.setState({ num: this.state.num + 1 });
+    }
+
+    //使用 updater 函数，render 中 this.state.num 值为 4
+    handleClick() {
+      this.setState(state => {
+        return { num: state.num + 1 };
+      });
+      this.setState(state => {
+        return { num: state.num + 1 };
+      });
+      this.setState(state => {
+        return { num: state.num + 1 };
+      });
+    }
+
+    //对象参数“异步更新”，可以认为覆盖了前面所以偶函数参数对state 的更新，而对象参数更新后的函数参数更新则按照正常情况更新。render 中 this.state.num的值为３。
+    handleClick() {
+      this.setState({ num: this.state.num + 1 });
+      this.setState({ num: this.state.num + 1 });
+      this.setState({ num: this.state.num + 1 });
+      this.setState(state => {
+        return { num: state.num + 1 };
+      });
+      this.setState(state => {
+        return { num: state.num + 1 };
+      });
+      this.setState({ num: this.state.num + 1 });
+      this.setState({ num: this.state.num + 1 });
+      this.setState(state => {
+        return { num: state.num + 1 };
+      });
+    }
+   ```
+虽然 setState 并非使用了 setTimeout 或 Promise 的那种进入到事件循环(Event loop)的异步执行，但它的执行行为在 react 库中时，确实是异步的，即有延时行为。文档上的说法是 state 的 update 可能是异步的，这样做有两个主要原因：
+1. 通过异步的方式，可以把批量的 setState 对 state 的改变合并到一次 render 中，可以提升性能。
+2. 保持内部的一致性。即使state可以同步更新，props 也做不到。比如：很多时候会出现子组件的状态提升到父组件的情况，此时即使在子组件中通过回调函数对 props 的值做了改变，props 也会等到父组件 render 之后才会做出改变。
+
+需要注意的是，setState 并不是真正意义上的异步操作，它只是模拟了异步的行为(本身执行的过程和代码都是同步的，只是合成事件和钩子函数的调用顺序在更新之前)。React 会维护一个标识(isBatchingUpdates),用它来判断是直接更新还是先暂存state进队列。在合成事件和react生命周期函数中，受React控制，在使用 setState 时会将 isBatchingUpdates 设置为 true, 从而走类似异步的流程。
+
+而在原生事件(如使用 addEventListener　绑定的时间)以及 setTimeout, setInterval, Promise 等的异步回调中，setState 对于 state 的修改是同步的。也就是每一次setState都会导致组件的render,而且可以在 setState 后直接通过 this.state 获取到更新后的 state 的值。
+
+使用 add EventListener 的 callback 中使用的 state 值不会更新。
+
+### 5. class 组件和 function 组件
+class 组件和 function 组件最大的区别在于：函数组件捕获了渲染所用的值(无 hooks 无关)。
+
+在React 中，Props 是不可变的，但 this 是可变的。事实上，这就是class 组件中 this 存在的意义。React 本身会随着时间的推移而改变，this 让我们可以在渲染方法以及生命周期方法中得到最新的实例。
+
+因此每一次重新渲染，this.props 都会改变。这里就引出了一个问题：如果说UI在概念上是当前应用状态的一个函数，那么事件处理程序也是针对的当前UI,属于一个拥有特定 props 和　state 的特定渲染。但若是在事件处理函数中使用 setTimeout 调用一个回调来读取 this.props, this.props 却会随着渲染更新，从而使得回调函数“失去”了正确的 props。从 this 中读取数据的行为，切断了这样的联系。
+
+若不考虑 function 组件，解决上面问题的方法：
+1. 在调用事件之前读取 this.props, 并将需要的值显示地传递到回到函数中去。这样可以解决问题，但使得代码明显变得更加冗长，容易出错。
+2. 使用闭包，在render 内部定义方法，在特定的渲染中捕获对应的 props 或者 state
+   ```js
+   class profilePage extends Component {
+     render() {
+       //capture props
+       const props = this.props;
+
+       const callback = () => {
+         alert(props);
+       }
+
+       const handleClick = () => {
+         setTimeout(callback, 3000);
+       }
+
+       return (<button onClick = {handleClick} >click</button>)
+     }
+   }
+   ```
+   这样在渲染的时候就已经捕获了 props。但在 render 方法中定义各种函数，而不是使用 class 的方法，就没有使用类的意义了。事实上，我们可以通过删除类的"包裹"来简化代码：
+   ```js
+   function profilePage(props) {
+     const callback = () => {
+       alert(props);
+     }
+
+     const handleClick = () => {
+       setTimeout(callback, 3000);
+     }
+
+     return <button onClick = {handleClick} >click</button>
+   }
+   ```
+   父组件使用不同的props 来渲染 profilepage 时，React 会再次调用profilePage 函数。而我们点击的事件处理函数属于有自己独特 props 的渲染，且回调函数能够访问到改 props 对应的值。因此这就是 class 组件和 function 组件之间最大的差别：**function 组件捕获了渲染所使用的值。使用 hooks, 同样的原则也适用于 state**。
+
+现在我们知道，默认情况下 react 中的函数会捕获 props 和　state, 但若是想要读取并不属于此次特定渲染而是最新的 props 和 state 呢。在class组件中，this　可变，因此可以使用 this 来实现。而在 funciton 组件中，也可以拥有一个在所有的组件渲染帧中共享的可变变量：ref。相比　“DOM's refs”，　ref 在概念上更为广泛通用，它只是一个可以放东西进去的盒子。就表现上来所，`this.something` 就像是 `something.current` 的一个镜像。
+```js
+function profilePage() {
+  const [message, setMessage] = useState('');
+  const latestMessage = useRef('')
+
+  const callback = () => {
+    alert(latestMessage.current)
+  };
+
+  //想要特定 props 或 state 保持最新值，手动更新比较麻烦，可以使用一个 effect 来自动化实现它：
+  useEffect(() => {
+    lastMessage.current = message;
+  });
+
+  const handleClick = () => {
+    setTimeout(callback, 3000);
+  };
+
+  const handleMessageChange = (e) => {
+    setMessage(e.target.value);
+    //手动更新
+    latestMessage.current = e.target.value;
+  }
+}
+```
+
+
+参考：
+- [How Are Function components Different from classes?](https://overreacted.io/how-are-function-components-different-from-classes/)
+
 
 ### 杂项
-babel 在编译时会判断 JSX 中组件的首字母，当首字母为小写是，认定其为DOM标签，createElement的第一个变量被编译为字符串;当首字母为大写时，认定其为自定义组件，createElement的第一个变量被编译为对象。
+babel 在编译时会判断 JSX 中组件的首字母，当首字母为小写时，认定其为DOM标签，createElement的第一个变量被编译为字符串;当首字母为大写时，认定其为自定义组件，createElement的第一个变量被编译为对象。
 
 JSX防止注入攻击，React 在渲染所有输入内容之前，默认会进行转义。所有内容在渲染之前都被转换成了字符串，这样可以有效地防止XSS(cross-site-scription)攻击。
 
@@ -174,6 +332,6 @@ purecomponent 只会在 state 或者 props 的值变化时才会再次渲染，�
 
 组件渲染：初始化，props或 state 变化，父组件渲染(reconcilation diff算法会递归所有子组件，这里可以通过 pureComponent或者 shouldComponentUpdate 避免重复渲染)
 
-setState　的同步与异步：　https://juejin.im/post/5b45c57c51882519790c7441#heading-7
+setState　的同步与异步：　https://juejin.im/post/5b45c57c51882519790c7441#heading-7  setState 是一个异步方法，一个生命周期中所有的 setState 方法会合并操作。
 
 concurrent mode   SSR  web worker　fiber的render和commit 　 setState和props的批量更新。
