@@ -149,7 +149,7 @@ ExecutionContextObj = {
 ECMPScript 只支持实现继承，且实现主要依靠原型链来实现。
 
 ##### 4.1 原型链
-使用原型链实现继承，基本思想是利用原型让一个引用类型继承另一个引用类型的属性和方法，即原型对象等于另一个类型的实例(这里注意 constructor 一般会随着原型的改变而改变)。利用原型链实现继承，属性的查找就会沿着原型链层层向上，原型链的最后指向 `Object.prototype` (Object 也只是一个构造函数)。
+使用原型链实现继承，基本思想是利用原型让一个引用类型继承另一个引用类型的属性和方法，即原型对象等于另一个类型的实例(这里注意 constructor 一般会随着原型的改变而改变)。利用原型链实现继承，属性的查找就会沿着原型链层层向上，原型链的最后指向 `Object.prototype` (Object 也只是一个构造函数)。原型链的终点是null。
 
 特点：
 
@@ -362,7 +362,7 @@ JS 具有自动垃圾收集机制，其原理就是找出那些不再继续使�
 参考：
 - 《你不知道的JS》
 
-### 7. call、apply 和 bind
+### 7. new、call、apply 和 bind
 call()、apply() 和 bind() 都可以用来指定 this 的绑定对象：
 1. 三者第一个参数都是 this 的绑定对象。
 2. bind 和 call 之后传入的参数都用逗号分隔。
@@ -374,8 +374,81 @@ bind 使用：
 2. 因为 bind() 返回的结果依然是 function, 因此可以被　new　运算符调用，此时 bind 的第一个参数无效。
 3. setTimeout 中常出现隐式丢失的情况，此时除了使用引号包裹函数，也可以使用 bind 再次显示绑定 this。
 
+new 操作父模拟实现：
+```js
+function newOperator(ctor) {
+  if(typeof ctor !== 'function') {
+    throw 'the first param must be a function';
+  }
+  newOperator.target = ctor;
+  var newObj = Object.create(ctor.prototype);
+  var argsArr = [].slice.call(arguments, 1);
+  var ctorReturnResult = ctor.apply(newObj, argsArr);
+  var isObject = typeof ctorReturnResult === 'object' && ctorReturnResult !== null;
+  var isFunction = typeof ctorReturnResult === 'function';
+  if(isObject || isFunction) {
+    return ctorReturnResult;
+  }
+  return newObj;
+}
+```
+不考虑 new 操作符时，bind 的 polyfills 更小，性能也更好：
+```js
+// 在使用 "new funcA.bind(thisArg, args)" 无效
+if (!Function.prototype.bind){
+  (function() {
+    var slice = Array.prototype.slice;
+    Function.prototype.bind = function() {
+      var thatFunc = this, thatArg = arguments[0];
+      var args = slice.call(arguments, 1);
+      if(typeof thatFunc !== 'function') {
+        throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+      }
+      return function() {
+        var funcArgs = args.concat(slice.call(arguments));
+        return thatFunc.apply(thatArg, funcArgs);
+      }
+    }
+  })();
+}
+```
+需要用于 new 操作符时，bind 的 polyfills 更大，性能更差：
+```js
+//可以用于 "new funcA.bind(thisArg, args)"
+if (!Function.prototype.bind) {
+  (function() {
+    var ArrayPrototypeSlice = Array.prototype.slice;
+    Function.prototype.bind = function(otherThis) {
+      if (typeof this !== 'function') {
+        throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+      }
+      var baseArgs = ArrayPrototypeSlice.call(arguments, 1),
+          baseArgsLength = baseArgs.length,
+          fToBind = this,
+          fNOP = function() {},
+          fBound = function() {
+            baseArgs.length = baseArgsLength;
+            baseArgs.push.apply(baseArgs, arguments);
+            return fToBind.apply(
+              fNOP.prototype.isPrototypeOf(this) ? this : otherThis, baseArgs
+            );
+          };
+      if (this.prototype) {
+        fNOP.prototype = this.prototype;
+      }
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    }
+  })()
+}
+```
+
+
 参考：
 - [理解 javascript 里的 bind() 函数](https://www.webhek.com/post/javascript-bind.html)
+- [js的new操作符的实现](https://juejin.im/post/5bde7c926fb9a049f66b8b52#heading-5)
+- [MDN bind](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
 
 ### ８. 理解参数
 1. ECMAScript 中的参数在内部是用一个数组来表示的，函数接收到的始终都是这个数组，而不关心其中参数具体个数以及类型。
