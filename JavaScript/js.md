@@ -66,6 +66,20 @@ ExecutionContextObj = {
 3. 副作用：闭包是通过作用域链的变量(活动)对象对变量进行访问，而不是单独保存了某些特殊变量,所以闭包只能取到变量的最新的值。在某些情况下，可以创建一个匿名立即执行函数强制让闭包的行为符合预期。
 4. 匿名函数的执行环境具有全局性，所以其 `this` 通常指向 `window。`
 5. `this` 和 `arguments` 不存在于作用域链的活动对象中，因此内部函数无法直接访问到外部函数的这两个变量。把外部作用域中的 `this` 保存在一个闭包能够访问到的变量中(赋值给一个变量，该变量会保存在活动对象中)，可以解决这个问题。
+6. 结合闭包和匿名函数，可以模仿块级作用域：
+   ```js
+   function outputNumbers(count) {
+     //匿名函数中定义的任何变量，都会在执行结束时被销毁。这种做法可以减少闭包占用的内存问题，因为没有指向匿名函数的引用，只要函数执行完毕，就可以立即销毁其作用域链了。
+     (function() {
+       //该匿名函数是一个闭包，可以访问包含作用域中的所有变量，包括count
+       for(var i = 0; i < count; i++) {
+         console.log(i);
+       }
+     })();
+
+     console.log(i);
+   }
+   ```
 
 闭包可能会占用更多的内存
 
@@ -444,7 +458,6 @@ if (!Function.prototype.bind) {
 }
 ```
 
-
 参考：
 - [理解 javascript 里的 bind() 函数](https://www.webhek.com/post/javascript-bind.html)
 - [js的new操作符的实现](https://juejin.im/post/5bde7c926fb9a049f66b8b52#heading-5)
@@ -457,6 +470,124 @@ if (!Function.prototype.bind) {
 4. arguments 可以与命名参数一起使用，且在非严格模式下，其元素值永远与对应命名参数的值保持同步。需要注意的是，这并不是说二者的值会访问相同的内存空间；它们的空间是独立的，但他们的值会同步。但要注意，arguments 的值由传入的参数的个数决定，而不是由定义函数时的命名参数的个数决定，所以若是修改超出 arguments 长度的值则不会反映到命名参数中。
 5. 严格模式下，arguments 元素值与对应命名参数的值不同步, 且重写 arguments 的值会导致语法错误。
 6. 在某些情况下，通过检查传入函数中的参数类型和个数并做出不同的反应，可以模仿方法的重载。
+
+### 9.深拷贝
+JS的原生不支持深拷贝，Object.assign 和 {...obj} 都属于浅拷贝。
+
+JSON.stringfy 和 JSON.parse 可以很简单的实现深拷贝，原理就是先将对象转换为字符串，再通过JSON.parse重新建立一个对象，但这种方法局限也很多：
+- 不能复制function、正则、Symbol
+- 循环引用报错
+- 相同的引用会被重复复制
+
+递归实现：
+```js
+function deepCopy(target) {
+  let copyed_objs = [];
+  function _deepCopy(target) {
+    if((typeof target !== 'object' || !target)){
+      return target;
+    }
+    for(let i = 0; i < copyed_objs.length; i++) {
+      if(copyed_objs[i].target === target) {
+        return copyed_objs[i].copyTarget;
+      }
+    }
+    let obj = {};
+    if(Array.isArray(target)) {
+      obj = [];
+    }
+    copyed_objs.push({target: target, copyTarget: obj});
+    Object.keys(target).forEach(key => {
+      if(obj[key]) {
+        return;
+      }
+      obj[key] = _deepCopy(target[key]);
+    });
+    return obj;
+  }
+  return _deepCopy(target);
+}
+```
+参考：
+- [JS深拷贝总结](https://juejin.im/post/5b20c9f65188257d7d719c1c)
+
+### 10. var、let、const
+ES5 只有 var 和 function 两种声明变量的方法；而 ES6 中有 var、let、const、function、improt 和 class 共6中声明变量的方法。
+var：
+1. 作用域为该语句所在的函数内。
+2. 存在变量提升现象:
+   ```js
+   var temp = 'abc';
+   function f() {
+     console.log(temp);
+   }
+   f() //abc
+   console.log(temp); //abc
+
+   //变量提升：
+   var temp = 'abc';
+   function f() {
+     console.log(temp);
+     var temp = 'def';
+   }
+   f(); //undefined
+   console.log(temp); //abc
+   ```
+3. 允许重复声明同一个变量, js 会对后续的声明视而不见(但若是声明中有变量初始化的话，会执行该初始化)。
+4. 在代码的最顶层使用 var 时，它会成为一个全局变量，并添加到全局对象(浏览器环境为 window, 在 Node 指的是 global)中，成为其属性。
+
+let：
+1. 块作用域。
+   - ES6 的块级作用域必须有大括号，否则 js 引擎就认为不存在块级作用域。
+   - 块级作用域的出现，实际上使得匿名立即执行函数表达式不再必要了。
+2. 存在暂时性死区现象：只要块级作用域内存在let命令，它所声明的变量就绑定该区域，而不在受外部影响。因此，在代码块内，会使用 let 声明的变量， 在let命令声明变量之前，该变量都是不可用的。这样的设计是为了良好的编程习惯：变量一定要在声明之后使用。
+3. 在for循环设置循环变量那一部分是一个父作用域，而循环体内部是一个单独的子作用域。
+4. 不允许重复声明，且在函数内直接用 let 在声明一个参数变量会报错(在函数中的块作用域内可以声明相同的参数);
+    ```js
+    // i 在全局范围内有效，所以全局是由一个变量i,每次循环 i 的值都会改变，结合闭包原理可知输出结果
+    var a = [];
+    for(var i = 0; i< 10; i++) {
+      a[i] = function() {
+        console.log(i);
+      }
+    }
+    a[6](); // 10
+
+    //i 只在本轮循环中有效，所以每一次循环的 i 都是一个新的变量
+    var a = [];
+    for(let i = 0; i < 10; i++) {
+      a[i] = function() {
+        console.log(i);
+      }
+    }
+    a[6](); // 6
+
+    //输出3次abc,循环内部的变量 i 没有影响到循环变量。
+    for(let i = 0; i < 3; i++){
+      let i = 'abc';
+      console.log(i);
+    }
+    ```
+5. 在代码的最顶层使用 let 时，虽然它也会成为一个全局变量(因为其作用域是整个代码库的块)，但它不会成为全局对象的属性。
+
+const:
+1. 声明一个只读的常量，一旦声明，就不能改变。因此 const 一旦声明变量，就必须立即初始化，不能留到之后赋值。
+2. const 作用域与let相同，且也存在暂时性死区，且不可重复声明。
+3. const 实际上保证的，并不是变量的值不得改动，而是变量指向的内存地址所保存的数据不得改动。对于简单类型的数据，保存的数据即使值；而对于引用类型，保存的只是一个指向实际数据的指针。
+
+### 11. 数据类型
+ES6引入了新的原始数据类型 Symbol,因此当前共七种数据类型：Undefined、Null、Boolean、String、Number、Symbol、Object。
+
+typeof 返回值： undefined、boolean、string、number、object、function
+
+Undefined类型：
+1. Undefined 类型只有一个值，也就是 undefined。当声明了变量但未对其进行初始化时，其值就为 undefined。
+2. 对未声明过的变量，只能使用 typeof 操作符。 对未初始化和未声明的变量使用 typeof 操作符都会放回 undefined。但要注意， 在let 或const 的暂时性死区现象中，使用 typeof 操作符同样也会报错。
+
+Null 类型：
+1. Null 类型也只有一个值，就是 null。从逻辑角度来看，null 值表示一个空对象指针，这也是使用 typeof 操作符检测 null 值时会返回 "object"的原因。
+2. 实际上，undefined 派生自 null 值，对他们的相等性测试("==")要返回true。
+3. 若对应的变量准备在将来用于保存对象，则最好将其初始化为null,这样，只要检测null值就可以知道相应的变量是否已经保存了一个对象的引用。而相对的，一般是没有必要将一个变量的值显示设置为 undefined。
 
 ajax fetch
 js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　
