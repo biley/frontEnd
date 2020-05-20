@@ -361,7 +361,7 @@ JS 具有自动垃圾收集机制，其原理就是找出那些不再继续使�
      }
    }
    ```
-4. 箭头函数：箭头函数不使用 `this`　的四种标准规则，而是根据外层(函数或者全局)作用域来决定 `this`(对象或者for、if代码块不构成作用域)，具体来说，箭头函数会继承外层函数调用的 `this`　绑定。箭头函数可以像 `bind` 一样确保函数的 `this` 被绑定到指定对象，很多时候，`that = this` 和箭头函数都可以取代 `bind`。
+4. 箭头函数：箭头函数不适用 `this`　的四种标准规则，而是根据外层(函数或者全局)作用域来决定 `this`(对象或者for、if代码块不构成作用域)，具体来说，箭头函数会继承外层函数调用的 `this`　绑定。箭头函数可以像 `bind` 一样确保函数的 `this` 被绑定到指定对象，很多时候，`that = this` 和箭头函数都可以取代 `bind`。
 
 在一定程度上，这也跟内存中的数据结构有关(原始的对象以字典结构保存，每一个属性名都对应一个属性描述对象)：
 - 基本数据类型保存在栈内存中。
@@ -373,10 +373,66 @@ JS 具有自动垃圾收集机制，其原理就是找出那些不再继续使�
 
 为什么要使用 this，　this 指向 DOM　元素
 
+```js
+const obj = {
+  f1: () => console.log(this),
+  f2() {console.log(this)},//和 f2: function() {console.log(this)} 的区别
+};
+obj.f1();
+obj.f2();
+new obj.f1();
+new obj.f2();
+```
+
 参考：
 - 《你不知道的JS》
 
-### 7. new、call、apply 和 bind
+### 7. 箭头函数
+使用箭头函数注意点：
+1. this 的绑定：
+   - 函数体内的 this 就是定义时所在的对象，而不是使用时所在的对象。在普通函数中， this 的指向是可变的，但在箭头函数中，它是固定的，这种特性很有利于封装回调函数。
+   - this 指向的固定化，并不是因为将头函数内部有绑定 this 的机制，实际是因为箭头函数根本没有自己的 this, 导致内部的 this 就是外层代码的 this。正是因为它没有 this, 所以也就不能用作构造函数,也就不能用call()、apply()、bind()这些方法改变 this 的指向。所以箭头函数转为ES5的代码如下：
+   ```js
+   //ES6 
+   function foo() {
+     setTimeout(() => {
+       console.log('id', this.id);
+     }, 100);
+   }
+   //ES5
+   function foo() {
+     var _this = this;
+
+     setTimeout(function() {
+       console.log('id', _this.id)
+     }, 100);
+   }
+   ```
+2. 不可以当作构造函数，即不可以使用 new 操作符，否则报错。
+3. 不可以使用 arguments 对象，该对象在函数体内不存在。但可以使用 rest 参数代替。实际上，this、arguments、super、new.target 在箭头函数中都是不存在的，都会指向外层函数的对应变量。
+4. 不可以使用 yield 命令，因此箭头函数不能用作 Generator 函数。
+
+不适用场合：
+1. 定义对象的方法，且该方法的内部包括 this：
+   ```js
+   const cat = {
+     lives: 9;
+     jumps: () => {
+       this.lives--;
+     }
+   }
+   ```
+   调用 cat.jumps() 时，若是普通函数，则该方法内部的 this 指向 cat; 若函数值普通函数，则其中的 this 指向全局对象，因此不会得到预期的结果。这是因为对象不构成单独的作用域，导致 jumps 箭头函数定义时的作用域就是全局作用域。
+2. 需要动态 this 的时候，也不应该使用箭头函数：
+   ```js
+   var button = document.getElementById('press');
+   button.addEventListener('click', () => {
+     this.classList.toggle('on');
+   });
+   ```
+   以上的代码在运行的时候，点击按钮会报错，因为监听函数中是一个箭头函数，其中的 this 指向了全局对象。若改成普通对象， this 就会动态指向被点击的按钮对象。
+
+### 8. new、call、apply 和 bind
 call()、apply() 和 bind() 都可以用来指定 this 的绑定对象：
 1. 三者第一个参数都是 this 的绑定对象。
 2. bind 和 call 之后传入的参数都用逗号分隔。
@@ -463,7 +519,7 @@ if (!Function.prototype.bind) {
 - [js的new操作符的实现](https://juejin.im/post/5bde7c926fb9a049f66b8b52#heading-5)
 - [MDN bind](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
 
-### ８. 理解参数
+### 9. 理解参数
 1. ECMAScript 中的参数在内部是用一个数组来表示的，函数接收到的始终都是这个数组，而不关心其中参数具体个数以及类型。
 2. 在函数体内可以通过 arguments 对象来访问在这个参数数组，从而获取传递给函数的每一个参数。arguments 对象与数组类似，可以用"[]"来访问元素，可以使用 length 属性来确定传入的参数的个数。可以通过 `Array.prototype.slice.call(arguments)` 将其转为数组。
 3. 因此 ECMAScript 函数中，命名的参数只是提供便利，并不是必须的(完全可以使用 arguments 来获取传入的参数)。
@@ -471,7 +527,7 @@ if (!Function.prototype.bind) {
 5. 严格模式下，arguments 元素值与对应命名参数的值不同步, 且重写 arguments 的值会导致语法错误。
 6. 在某些情况下，通过检查传入函数中的参数类型和个数并做出不同的反应，可以模仿方法的重载。
 
-### 9.深拷贝
+### 10.深拷贝
 JS的原生不支持深拷贝，Object.assign 和 {...obj} 都属于浅拷贝。
 
 JSON.stringfy 和 JSON.parse 可以很简单的实现深拷贝，原理就是先将对象转换为字符串，再通过JSON.parse重新建立一个对象，但这种方法局限也很多：
@@ -511,7 +567,7 @@ function deepCopy(target) {
 参考：
 - [JS深拷贝总结](https://juejin.im/post/5b20c9f65188257d7d719c1c)
 
-### 10. var、let、const
+### 11. var、let、const
 ES5 只有 var 和 function 两种声明变量的方法；而 ES6 中有 var、let、const、function、improt 和 class 共6中声明变量的方法。
 var：
 1. 作用域为该语句所在的函数内。
@@ -575,7 +631,7 @@ const:
 2. const 作用域与let相同，且也存在暂时性死区，且不可重复声明。
 3. const 实际上保证的，并不是变量的值不得改动，而是变量指向的内存地址所保存的数据不得改动。对于简单类型的数据，保存的数据即使值；而对于引用类型，保存的只是一个指向实际数据的指针。
 
-### 11. 数据类型
+### 12. 数据类型
 ES6引入了新的原始数据类型 Symbol,因此当前共七种数据类型：Undefined、Null、Boolean、String、Number、Symbol、Object。
 
 typeof 返回值： undefined、boolean、string、number、object、function
@@ -583,11 +639,20 @@ typeof 返回值： undefined、boolean、string、number、object、function
 Undefined类型：
 1. Undefined 类型只有一个值，也就是 undefined。当声明了变量但未对其进行初始化时，其值就为 undefined。
 2. 对未声明过的变量，只能使用 typeof 操作符。 对未初始化和未声明的变量使用 typeof 操作符都会放回 undefined。但要注意， 在let 或const 的暂时性死区现象中，使用 typeof 操作符同样也会报错。
+3. undefined 是一个表示'无'的原始值，转为数值时为NaN： `Number(undefined)`、`3 + undefined`； 而 null 是一个表示 "无" 的对象，转为数值时为0。
 
 Null 类型：
 1. Null 类型也只有一个值，就是 null。从逻辑角度来看，null 值表示一个空对象指针，这也是使用 typeof 操作符检测 null 值时会返回 "object"的原因。
 2. 实际上，undefined 派生自 null 值，对他们的相等性测试("==")要返回true。
 3. 若对应的变量准备在将来用于保存对象，则最好将其初始化为null,这样，只要检测null值就可以知道相应的变量是否已经保存了一个对象的引用。而相对的，一般是没有必要将一个变量的值显示设置为 undefined。
+
+### 13. 跨域
+**跨域**
+1. 同源策略及其限制内容
+   同源策略是一种约定，它
+
+参考：
+- [九种跨域方式实现原理](https://juejin.im/post/5c23993de51d457b8c1f4ee1)
 
 ajax fetch
 js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　
@@ -596,3 +661,5 @@ js 为什么单线程 块作用域 bind let const var this 原型链 构造 设�
 在函数内部可以通过函数名来引用函数，对于匿名函数，唯一从内部引用自身的方式是使用 arguments.callee (已弃用)。
 
 polyfill 就是我们常说的刮墙用的腻子，polyfill 代码主要用于旧浏览器的兼容，比如说在旧的浏览器中没有内置 bind 函数，因此可以使用 polyfill 代码在就浏览器中实现新的功能。
+
+git rebase
