@@ -647,12 +647,89 @@ Null 类型：
 3. 若对应的变量准备在将来用于保存对象，则最好将其初始化为null,这样，只要检测null值就可以知道相应的变量是否已经保存了一个对象的引用。而相对的，一般是没有必要将一个变量的值显示设置为 undefined。
 
 ### 13. 跨域
-**跨域**
-1. 同源策略及其限制内容
-   同源策略是一种约定，它
-
 参考：
 - [九种跨域方式实现原理](https://juejin.im/post/5c23993de51d457b8c1f4ee1)
+
+### 14. 节流、防抖
+函数防抖：　任务频繁触发的情况下，只有在指定间隔时间内未再次触发任务，任务才会触发。
+函数节流：　指定时间间隔内只会执行一次任务。
+
+**函数防抖**
+函数防抖最常见的场景是：在用户输入的时候就执行网络请求进行一些判断。这样做不仅对服务器的压力增大了，用户的体验也未必比原来的好。理想的做法应该是：当用户输入第一个字符后的一段时间内如果还有字符输入的话，就暂时不发送请求。这里使用函数防抖就能很好的解决这个问题：
+```js
+//不是用函数防抖
+function ajax(content){
+  ...//ajax 请求
+}
+
+let inputEl = document.getElementById('unDebounce');
+
+inputEl.addEventListener('keyup', function(e) {
+  ajax(e.target.value)
+});
+
+//使用函数防抖
+function ajax(content) {
+  ...//ajax 请求
+}
+
+function debounce(fun, delay) {
+  return function(args) {
+    let that = this;
+    let _args = args;
+    clearTimeout(fun.id);
+    fun.id = setTimeout(function () {
+      fun.call(that, _args)
+    }, delay);
+  }
+}
+
+function debounce(fun, delay) {
+  return function(args) {
+    clearTimeout(fun.id);
+    fun.id = setTimeout((args) => fun(args), delay);
+  }
+}
+
+let inputEl = document.getElementById('debounce');
+let debounceAjax = debounce(ajax, 500);
+
+inputEl.addEventListener('keyup', function(e) {
+  debounceAjax(e.target.value);
+});
+```
+
+**函数节流**
+函数节流的一个场景是：要判断页面是否滚动到底部，普通做法就是监听 window 对象的 scroll 事件，然后再在函数体中写入判断是否滚动到底部的逻辑。这样做的一个缺点是比较消耗性能，因为在滚动的时候，浏览器会持续计算是否滚动到底部的逻辑。但在实际场景中，在滚动过程中，每隔一段时间计算该判断逻辑就可以了，所以在滚动事件中引入函数的节流是一个非常好的实践：
+```js
+$(window).on('srcoll', throttle(function() {
+  //判断是否滚动到底部的逻辑
+  let pageHeight = $('body').height(),
+      scrollTop = $(window).scrollTop(),
+      winHeight = $(window).height(),
+      thresold = pageHeight - scrollTop - winHeight;
+  if(thresole > -100 && thresold <= 20) {
+    console.log('end');
+  }
+}))
+
+function throttle(fn, interval = 300) {
+  let canRun = true;
+  return function() {
+    if(!canRun) return;
+    canRun = false;
+    setTimeout(() => {
+      fn.apply(this, arguments);
+      canRun = true;
+    }, interval);
+  }
+}
+```
+
+参考：
+- [函数节流与函数防抖](https://juejin.im/entry/58c0379e44d9040068dc952f)
+- [７分钟理解JS的节流、防抖及使用场景](https://juejin.im/post/5b8de829f265da43623c4261)
+
 
 ajax fetch
 js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　
