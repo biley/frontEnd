@@ -11,8 +11,9 @@
 - [7. BFC](#7-bfc)
 - [8. media](#8-media)
 - [9. 栅格](#9-%e6%a0%85%e6%a0%bc)
-- [9. flex box](#9-flex-box)
-- [9 transform](#9-transform)
+- [10. flex box](#10-flex-box)
+- [11 transform](#11-transform)
+- [12. CSS 预处理器](#12-css-%e9%a2%84%e5%a4%84%e7%90%86%e5%99%a8)
 
 ***
 ### 1. 居中
@@ -255,7 +256,7 @@ CSS3 中使用的语法为：
         padding: 12px;
       }
     ```
-### 9. flex box
+### 10. flex box
 设为 flex 布局之后，子元素的 float、clear和vertical-align属性将失效。
 
 容器:
@@ -311,4 +312,84 @@ align-self 定义单个项目的对齐方式：
 参考：
 - [flex布局教程：语法篇](https://www.ruanyifeng.com/blog/2015/07/flex-grammar.html)
 
-### 9 transform
+### 11 transform
+
+### 12. CSS 预处理器
+CSS 自诞生以来，基本语法和核心机制一直没有本质上的变化，在很长一段时间内，它的发展几乎全是表现力层面上的提升。随着网站越来越复杂，原生 CSS 已经让开发者力不从心。
+
+当一门语言的能力不足而用户的运行环境又不支持其他选择的时候，这门语言就会沦为“编译目标”语言。开发者将选择另一门更高级的语言来进行开发，然后编译到底层语言以便实际运行。于是，在前端，CSS　预处理器应运而生。
+
+CSS 预处理器是一个让开发者能通过预处理器独有的语法来生成 CSS 的程序，市面上有很多 CSS 预处理器可供选择，绝大多数都会增加一些原生 CSS 不具备或不完善的高级特性，这些特性让 CSS 的结构更加具有可读性且易于维护。当前有代表性的主要为：
+- Sass: (2007年) 最早也最成熟的 CSS 预处理器，受LESS影响，已经全面兼容 CSS 和 SCSS。SCSS　是 Sass3　引入新的语法，其语法完全兼容CSS3, 且继承了Sass的强大功能。二者的区别在于：
+  1. 文件名扩展不同：".sass"后缀和".scss"后缀。
+  2. 语法书写方式不同，Sass 以严格的缩进格式语法规则来书写，不带大括号和分号；而SCSS的语法书写和CSS语法书写方式非常类似。
+- Less: (2009年) 受 SASS 影响比较大，但使用 css 的语法，更容易上手。缺点是编程功能不够，优点是简单和兼容CSS, 反过来也影响到了 SASS 演变为 SCSS。
+- Stylus: (2010) 主要用来给 Node 项目进行CSS预处理支持, 完全由JS实现，对Node.js 工具链极为友好。它是一种新型语言，可以创建健壮的、动态的、富有表现力的CSS。其本质上做的事情与SASS/LESS类似。
+
+虽然各种预处理器功能强大，但使用最多的，还是以下几个特性：
+1. 变量及相关操作：
+   ```css
+    $font-size: 10px;
+    $font-family: Helvetica, sans-serif;
+
+    body {
+      font: $font-size $font-family;
+    }
+
+    .mark {
+      font-size: 1.5 * $font-size;
+    }
+   ```
+2. 代码混合(minxins)
+   ```css
+    @mixin clearfix {
+      &:after {
+        display: block;
+        content: '';
+        clear: both;
+      }
+    }
+
+    .sidebar {
+      @include clearfix;
+    }
+   ```
+3. 嵌套(nested rules)
+   ```css
+    #main p {
+      color: #00ff00;
+      widht: 100%;
+
+      .redbox {
+        background-color: #ff0000;
+        color: #000000;
+      }
+    }
+   ```
+4. 代码模块化(Modules)
+   Sass 拓展了　@import 功能，允许其导入SCSS或Sass文件，被导入的文件将合并编译到同一个CSS文件中，另外，被导入的文件中所包含的变量或者混合指令都可以在导入的文件中使用。
+
+   通常，@import 寻找Sass文件并将其导入。但在以下情况，@import 仅作为普通的 CSS 语句,不会导入Sass 文件：
+   - 文件扩展名为 .css。
+   - 文件名以 http:// 开头。
+   - 文件名是 url()。
+   - @import 包含 media requires。
+   若不再上述情况，文件扩展名是 .scss 或 .sass,则导入对应的 Sass 文件。若没有指定拓展名，Sass 将会试着寻找文件名相同，后缀为 .scss 或 .sass 的文件并将其导入。
+5. 工具类函数
+   ```css
+    $grid-width: 40px;
+    $gutter-width: 10px;
+
+    @function grid-width($n) {
+      @return $n * $grid-width + ($n - 1) * $gutter-width;
+    }
+
+    #sidebar { width: grid-width(5)};
+   ```
+
+
+参考：
+- [2019年，你是否可以抛弃CSS预处理器](https://aotu.io/notes/2019/10/29/css-preprocessor/index.html)
+- [sass 中文网](https://www.sass.hk/docs/)
+
+
