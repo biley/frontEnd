@@ -736,6 +736,137 @@ function throttle(fn, interval = 300) {
 - [函数节流与函数防抖](https://juejin.im/entry/58c0379e44d9040068dc952f)
 - [７分钟理解JS的节流、防抖及使用场景](https://juejin.im/post/5b8de829f265da43623c4261)
 
+### 15. JS 设计模式
+设计模式是为了更好的代码重用性，可读性，可靠性，可维护行。
+
+设计六大原则：
+- 单一职责原则
+- 里氏替换原则
+- 依赖倒转原则
+- 接口隔离原则
+- 最少知识原则
+- 开放封闭原则
+
+设计模式分类：
+1. 创建型模式：工厂方法模式、抽象工厂模式、单例模式、建造者模式、原型模式。
+2. 结构性模式：适配器模式、装饰器模式、代理模式、外观模式、桥接模式、组合模式、享元模式。
+3. 行为型模式：策略模式、模板方法模式、观察者模式、迭代子模式、责任链模式、命令模式、备忘录模式、状态模式、访问者模式、中介者模式、解释器模式。
+
+常见设计模式：
+1. 单例模式:保证一个类仅有一个实例，并提供一个访问它的全局访问点。
+
+   实现上一般会用一个变量来标识实例是否已经存在，若存在，则直接返回，反之就创建一个对象。经典的实现方式是创建一个类，这个类包含一个方法，这个方法在没有对象存在的情况下，将会创建一个新对象，若对象存在，则这个方法只返回这个对象的引用。
+   ```js
+   //通用的惰性单例
+    const getSingle = function (fn) {
+      let result;
+      return function() {
+        return result || (result = fn.apply(this, arguments))
+      }
+    }
+
+    const createLayer = function() {
+      //创建一个 layer dom
+      ...
+    };
+
+    const createSingleLayer = getSingle(createLayer);
+
+    //使用
+    const layer = createSingleLayer();
+
+   ```
+场景：模态框，浏览器中的window,　redux 中的 store 等。
+1. 发布－订阅模式
+
+
+参考：
+-[JS设计模式总结](https://juejin.im/post/5c984610e51d45656702a785)
+
+### 16. 高级函数
+一些额外的功能可以通过使用闭包来实现，此外，由于所有的函数都是对象，所以使用函数指针非常简单。这些令JS函数不仅有趣而且强大。
+
+#### 16.1 作用域安全的构造函数
+普通构造函数的问题在于当没有使用new操作符调用时，this 会指向全局对象或为 undefined。指向全局对象会导致对象属性的意外增加或对原有属性的覆盖。这个问题的解决方法就是创建一个作用域安全的构造函数：
+```js
+function Persion(name, age, job) {
+  //在进行任何更改前，首先确认 this 对象是正确类型的实例
+  if (this instanceof Person) {
+    this.name = name;
+    this.age = age;
+    this.job = job;
+  } else {
+    return new Person(name, age, job);
+  }
+}
+```
+使用了作用域安全的构造函数，就锁定了可以调用构造函数的环境。其他对象无法通过 call() 方法来继承其属性和方法，要结合原型链才可以解决这个问题。
+
+#### 16.2 惰性载入函数
+有点时候在执行函数时，需要根据具体环境以及浏览器差异执行不同的代码，也就是会使用 if 分支进行判断。而这些环境和浏览器是固定的，第一次执行函数后，之后每次调用时分支的结果都不变。所以可以在第一次执行函数之后，不再进行判断，使代码运行得更快，这里的解决方案就是惰性载入。
+
+惰性载入表示函数执行的分支仅会发生一次。有两种实现惰性载入的方式：
+1. 在函数被调用时再处理函数。第一次调用时，该函数会覆盖为另外一个按合适方式执行的函数，这样之后的调用就不用再经过分支判断了。
+   ```js
+   function fn() {
+     if(...) {
+       fn = function() {
+         ...
+       }
+     } else if(...) {
+       fn = function() {
+         ...
+       }
+     }
+
+     return fn();
+   }
+   ```
+2. 在声明函数时就指定适当的函数。这样，第一次调用函数时就不会损失性能了，而在代码首次加载时会损失一些性能。
+   ```js
+   //这里的技巧是使用一个匿名、立即执行的函数，用以确定应该使用哪一个函数实现
+   const fn = (function() {
+     if(...) {
+       return function() {
+         ...
+       }
+     } else if (...) {
+       return function() {
+         ...
+       }
+     }
+   })();
+   ```
+惰性函数的优点是只在执行分支代码时牺牲一点儿性能，两种方式的选择可以根据具体需求而定，不过二者都能避免执行不必要的代码。
+#### 16.3 函数绑定
+函数绑定要创建一个函数，可以在特定的 this 环境中以指定参数调用另一个函数。该技巧常常和回调函数与事件处理程序一起使用，以便将函数作为变量传递的同时保留代码执行环境。使用闭包可以达到目的，但创建多个闭包可能会令代码变得难于理解和调试，因此,bind()是一个更好的选择。
+
+#### 16.4 函数柯里化
+函数柯里化与函数绑定密切相关，它用于创建已经设置好了一个或多个参数的函数。它的基本方法和函数绑定是一样的：使用一个闭包返回一个函数。二者的区别在于，当函数被调用时，返回的函数还需要设置一些传入的参数。
+```js
+//常见柯里化函数的通用方式
+function curry(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return function() {
+    var innerArgs = Array.prototype.slice.call(arguments);
+    var finalArgs = args.concat(innerArgs);
+    return fn.apply(null, finalArgs);
+  }
+}
+```
+函数柯里化还常常作为函数绑定的一部分包含在其中，构造出更为复杂的bind()函数，如：
+```js
+//使用 bind 时，它会返回绑定到给定环境的函数，并且可能它其中某些函数参数已经被设定好。在一些场景下，比如除了 event 对象在额外给事件处理程序传递参数时，这非常有用。
+funciton bind(fn, context) {
+  var args = Array.prototype.slice.call(arguments, 2);
+  return function() {
+    var innerArgs = Array.prototype.slice.call(arguments);
+    var finalArgs = args.concat(innerArgs);
+    return fn.apply(context, finalArgs)
+  }
+}
+```
+ES5 的 bind() 方法也实现函数柯里化，只要在 this 的值之后再传入另一个参数即可。
 
 ajax fetch
 js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　
@@ -746,3 +877,7 @@ js 为什么单线程 块作用域 bind let const var this 原型链 构造 设�
 polyfill 就是我们常说的刮墙用的腻子，polyfill 代码主要用于旧浏览器的兼容，比如说在旧的浏览器中没有内置 bind 函数，因此可以使用 polyfill 代码在就浏览器中实现新的功能。
 
 git rebase
+
+参考：
+- [JS正则表达式完整教程](https://juejin.im/post/5965943ff265da6c30653879)
+- [JS设计模式与开发实践](https://github.com/JChehe/blog/issues/35)
