@@ -737,7 +737,7 @@ function throttle(fn, interval = 300) {
 - [７分钟理解JS的节流、防抖及使用场景](https://juejin.im/post/5b8de829f265da43623c4261)
 
 ### 15. JS 设计模式
-设计模式是为了更好的代码重用性，可读性，可靠性，可维护行。
+设计模式是为了更好的代码重用性，可读性，可靠性，可维护性。
 
 设计六大原则：
 - 单一职责原则
@@ -856,7 +856,7 @@ function curry(fn) {
 ```
 函数柯里化还常常作为函数绑定的一部分包含在其中，构造出更为复杂的bind()函数，如：
 ```js
-//使用 bind 时，它会返回绑定到给定环境的函数，并且可能它其中某些函数参数已经被设定好。在一些场景下，比如除了 event 对象在额外给事件处理程序传递参数时，这非常有用。
+//使用 bind 时，它会返回绑定到给定环境的函数，并且可能它其中某些函数参数已经被设定好。在一些场景下，比如除了 event 对象再额外给事件处理程序传递参数时，这非常有用。
 funciton bind(fn, context) {
   var args = Array.prototype.slice.call(arguments, 2);
   return function() {
