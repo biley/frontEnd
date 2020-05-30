@@ -777,11 +777,239 @@ function throttle(fn, interval = 300) {
 
    ```
 场景：模态框，浏览器中的window,　redux 中的 store 等。
-1. 发布－订阅模式
+
+2. 发布-订阅模式
+观察者模式很有用，但在 js 中通常使用一种叫做发布-订阅模式的变体来实现观察者模式。二者很相似，本质上的却别是调度的地方不同。虽然二者都存在订阅这和发布者，但观察者模式是由具体目标调度的，而发布-订阅模式是统一由调度中心调的，所以观察者模式订阅者与发布者之间是存在依赖的，而发布-订阅模式不会。
+
+发布订阅模式定义的是对象间一对多的依赖关系，当发布者的状态发生改变时，所有依赖与它的订阅者都会收到通知，并触发他们各自的回调函数。JS中的事件机制就是发布订阅者模式的体现？
+
+优点：
+1. 时间上的解耦。
+2. 对象上的解耦。
+
+缺点：
+1. 创建订阅者要消耗时间和内存，即使订阅的消息一直不发生，订阅者也会一直存在与内存中。
+2. 过渡使用会导致对象之间的关系过于弱化，程序难以跟踪维护。
+
+实现步骤：
+1. 指定一个充当发布者的对象。
+2. 给发布者添加缓存列表，用于存放回调函数，以便通知订阅者。
+3. 发布消息时，会遍历缓存列表中对应 key 值的数组，触发里面的回调函数的执行。
+
+```js
+//通用实现，将发布订阅功能单独提出来，放在一个对象内。观察这模式
+const event = {
+  clientList: {},
+  listen: function(key, fn) {},
+  tirgger: function() {},
+  remove: function() {},
+}
+//给对象安装发布订阅功能的函数
+const installEvent = function(obj) {
+  for(let i in event) {
+    obj[i] = event[i];
+  }
+}
+
+const saleOffice = {};
+installEvent(saleOffice);
+saleOffice.listen('message', fn1 = function() {});
+
+
+
+//全局的发布订阅模式:
+//1. 节约资源，避免为每个对象添加 listen, trigger 方法，以及缓存列表
+//2. 接触了耦合，在通用发布中，订阅者需要知道发布对象的名字才能订阅事件;而通过一个全局的中介，无需关心谁是发布者，谁是订阅者，这样有利于模块间的通信
+const event = (function() {
+  const clientList = {};
+  let listen;
+  let trigger;
+  let remove;
+
+  listen = function (key, fn) {
+    if (!clientList[key]) {
+      clientList[key] = [];
+    }
+    clientList[key].push(fn);
+  }
+
+  trigger = function() {
+    let key = Array.prototype.shift.call(argumets);
+    var fns = clientList[key];
+    if (!fns || fns.length === 0) {
+      return false;
+    }
+
+    for(let i = 0, fn; fn = fns[i++];) {
+      fn.apply(this.arguments)
+    }
+  }
+
+  remove = function (key, fn) {
+    const fns = clientList[key];
+    if (!fns) {
+      return false;
+    }
+
+    if (!fn) {
+      fns && (fns.length = 0)
+    } else {
+      for(let i = fns.length - 1; i >= 0; i--) {
+        var _fn = fns[i];
+        if (_fn === fn) {
+          fns.splice(i, 1)
+        }
+      }
+    }
+  }
+
+  return {
+    listen: listen,
+    trigger: trigger,
+    remove: remove,
+  }
+})();
+
+event.listen('message', function(value) {
+  console.log('here is value: ', value);
+});
+
+event.trigger('message', 32);
+```
+参考：
+- [JS设计模式-发布订阅模式](https://blog.csdn.net/qq_35585701/article/details/79888394)
+- [JS设计模式六(发布-订阅模式)](https://blog.csdn.net/lihangxiaoji/article/details/80005794?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase)
+
+3. 策略模式
+策略模式定义一系列算法，将他们一个个封装起来，并且使他们可以相互替换。它的核心是：
+1. 将算法的使用和算法的实现分离开来。
+2. 一个基于策略模式的程序至少由两部分组成：
+   - 一组策略类，封装了具体的算法，并负责具体的计算过程。
+   - 环境类 context，接受客户的请求，随后把请求委托给某一个策略类。因此， context 中要维持对某个策略对象的引用。
+3. 主要解决： 在有多种算法相似的情况下，使用 if...else 所带来的复杂和难以维护。
+```js
+// 根据绩效 level 和 salary 决定年终奖：
+const strageties = {
+  S: function (salary) {
+    return salary * 4;
+  },
+  A: function (salary) {
+    return salary * 3;
+  },
+  B: function (salary) {
+    return salary * 2;
+  }
+}
+
+const calculateBouns = function (level, salary) {
+  return strategies[level](salary)
+}
+
+console.log(calculateBouns('S', 20000))
+
+//可以把算法的概念扩散开来，策略模式也可以用来封装一系列的“业务规则”。
+
+//对表单值的检验，直接用 if-else 语句则
+//1.函数庞大，包含大量 if-else 语句;
+//2.缺乏弹性，增加或修改规则需要深入内部，违反开发-封闭原则;
+//3.算法复用性差
+const registerForm = document.getElementById('registerForm);
+registerForm.onsubmit = function() {
+  if (registerForm.nserName.value === '') {
+    ...
+  }
+  if (...) {
+    ...
+  }
+}
+
+//用策略模式重构表单校验
+//1. 将校验逻辑封装成策略对象
+//2. 实现 Validator 类，作为 context 接收用户的请求并委托给 strategy
+const stsrategies = {
+  isNotEmpty: function (value, errorMsg) {
+    if (value === '') {
+      return errorMsg;
+    }
+  },
+  minLength: function (value, length, errorMsg) {
+    if (value.length < length) {
+      return errorMsg;
+    }
+  }
+  ...
+}
+
+const Validator = function() {
+  this.cache = [];
+}
+
+//支持对同一个dom 添加多种校验规则
+Validator.prototype.add = function (dom, rules) {
+  const self = this;
+
+  for(let i = 0, rule; rule = rules[i++];) {
+    (function(rule) {
+      const strategyAry = rule.strategy.split(':');
+      var errorMsg = rule.errorMsg;
+
+      self.cache.push(function() {
+        const strategy = strategyAry.shift();
+        strategyAry.unshift(dom.value);
+        strategyAry.push(errorMsg);
+        return strategies[strategy].apply(dom, strategyAry);
+      })
+    })(rule);
+  }
+}
+
+Validator.prototype.start = function() {
+  for (let i = 0, validatorFunc; validatorFunc = this.cache[i++];) {
+    const errorMsg = validatorFunc(); //开始校验，并取得校验后的返回信息
+    if (errorMsg) {
+      return errorMsg;
+    }
+  }
+}
+
+//使用
+const registerForm = document.getElementById('registorForm');
+var validatorFunc = function() {
+  var validator = new Validator();
+
+  validator.add(registerForm.userName, [{
+      stragety: 'isNotEmpty',
+      errorMsg: '用户名不能为空',
+    }, {
+      strategy: 'minLength: 6',
+      errorMsg: '用户名长度不能少于 6 位',
+    }];
+  );
+
+  var errorMsg = validator.start();
+  return errorMsg;
+}
+
+registerForm.onsubmit = function() {
+  const errorMsg = validatorFunc();
+
+  if (errorMsg) {
+    alert(errorMsg);
+    return false;
+  }
+}
+```
+策略模式的优点：
+1. 利用组合、委托和多态等技术和思想，可以有效地避免多重条件选择语句
+2. 提供了对开放-封闭原则的完美支持，将算法封装在独立的 strategy 总，使得它们易于切换，易于理解，易于扩展。
+3. 策略模式中的算法也可以复用在系统的其他地方，从而避免许多重复的复制粘帖工作。
+4. 利用组合和委托让 context 拥有执行算法的能力，这也是继承的一种更轻便的替代方案。
 
 
 参考：
--[JS设计模式总结](https://juejin.im/post/5c984610e51d45656702a785)
+- []
+- [JS设计模式总结](https://juejin.im/post/5c984610e51d45656702a785)
+- [JS中常用的十五种设计模式](https://www.cnblogs.com/imwtr/p/9451129.html#o2)
 
 ### 16. 高级函数
 一些额外的功能可以通过使用闭包来实现，此外，由于所有的函数都是对象，所以使用函数指针非常简单。这些令JS函数不仅有趣而且强大。
