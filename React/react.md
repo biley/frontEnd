@@ -227,12 +227,12 @@ react16前是递归的，是这个顺序。react16后改成fiber架构，是反�
 
 需要注意的是，setState 并不是真正意义上的异步操作，它只是模拟了异步的行为(本身执行的过程和代码都是同步的，只是合成事件和钩子函数的调用顺序在更新之前)。React 会维护一个标识(isBatchingUpdates),用它来判断是直接更新还是先暂存state进队列。在合成事件和react生命周期函数中，受React控制，在使用 setState 时会将 isBatchingUpdates 设置为 true, 从而走类似异步的流程。
 
-而在原生事件(如使用 addEventListener　绑定的时间)以及 setTimeout, setInterval, Promise 等的异步回调中，setState 对于 state 的修改是同步的。也就是每一次setState都会导致组件的render,而且可以在 setState 后直接通过 this.state 获取到更新后的 state 的值。
+而在原生事件(如使用 addEventListener　绑定的事件)以及 setTimeout, setInterval, Promise 等的异步回调中，setState 对于 state 的修改是同步的。也就是每一次setState都会导致组件的render,而且可以在 setState 后直接通过 this.state 获取到更新后的 state 的值。
 
 使用 add EventListener 的 callback 中使用的 state 值不会更新。
 
 ### 5. class 组件和 function 组件
-class 组件和 function 组件最大的区别在于：函数组件捕获了渲染所用的值(无 hooks 无关)。
+class 组件和 function 组件最大的区别在于：函数组件捕获了渲染所用的值(与 hooks 无关)。
 
 在React 中，Props 是不可变的，但 this 是可变的。事实上，这就是class 组件中 this 存在的意义。React 本身会随着时间的推移而改变，this 让我们可以在渲染方法以及生命周期方法中得到最新的实例。
 
@@ -273,9 +273,9 @@ class 组件和 function 组件最大的区别在于：函数组件捕获了渲�
      return <button onClick = {handleClick} >click</button>
    }
    ```
-   父组件使用不同的props 来渲染 profilepage 时，React 会再次调用profilePage 函数。而我们点击的事件处理函数属于有自己独特 props 的渲染，且回调函数能够访问到改 props 对应的值。因此这就是 class 组件和 function 组件之间最大的差别：**function 组件捕获了渲染所使用的值。使用 hooks, 同样的原则也适用于 state**。
+   父组件使用不同的props 来渲染 profilepage 时，React 会再次调用profilePage 函数。而我们点击的事件处理函数属于有自己独特 props 的渲染，且回调函数能够访问到该 props 对应的值。因此这就是 class 组件和 function 组件之间最大的差别：**function 组件捕获了渲染所使用的值。使用 hooks, 同样的原则也适用于 state**。
 
-现在我们知道，默认情况下 react 中的函数会捕获 props 和　state, 但若是想要读取并不属于此次特定渲染而是最新的 props 和 state 呢。在class组件中，this　可变，因此可以使用 this 来实现。而在 funciton 组件中，也可以拥有一个在所有的组件渲染帧中共享的可变变量：ref。相比　“DOM's refs”，　ref 在概念上更为广泛通用，它只是一个可以放东西进去的盒子。就表现上来所，`this.something` 就像是 `something.current` 的一个镜像。
+现在我们知道，默认情况下 react 中的函数会捕获 props 和　state, 但若是想要读取并不属于此次特定渲染而是最新的 props 和 state 呢。在class组件中，this　可变，因此可以使用 this 来实现。而在 funciton 组件中，也可以拥有一个在所有的组件渲染帧中共享的可变变量：ref。相比　“DOM's refs”，　ref 在概念上更为广泛通用，它只是一个可以放东西进去的盒子。就表现上来说，`this.something` 就像是 `something.current` 的一个镜像。
 ```js
 function profilePage() {
   const [message, setMessage] = useState('');
