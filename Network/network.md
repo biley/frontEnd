@@ -571,5 +571,5 @@ http请求报文和响应报文都是由三个部分组成。请求报文：请�
 - https://baike.baidu.com/item/%E7%BD%91%E7%BB%9C%E4%B8%83%E5%B1%82%E5%8D%8F%E8%AE%AE
 
 
-bit Mb  域名区分，突破浏览器的连接限制，提高并行能力 http 如何保证请求和相应的对应
+bit Mb  域名区分，突破浏览器的连接限制，提高并行能力 http 如何保证请求和相应的对应　URI 和URL  wireshark抓包  https 双向认证
 数据链路层差错检测丢弃，而传输层差错检测要重传
