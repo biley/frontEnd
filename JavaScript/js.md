@@ -1100,13 +1100,13 @@ ES5 的 bind() 方法也实现函数柯里化，只要在 this 的值之后再�
 
 ajax fetch
 js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　
+git rebase 如何排查前端的性能问题
 
 杂项：
 在函数内部可以通过函数名来引用函数，对于匿名函数，唯一从内部引用自身的方式是使用 arguments.callee (已弃用)。
 
 polyfill 就是我们常说的刮墙用的腻子，polyfill 代码主要用于旧浏览器的兼容，比如说在旧的浏览器中没有内置 bind 函数，因此可以使用 polyfill 代码在就浏览器中实现新的功能。
 
-git rebase
 
 参考：
 - [JS正则表达式完整教程](https://juejin.im/post/5965943ff265da6c30653879)
