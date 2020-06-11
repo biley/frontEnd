@@ -1,9 +1,9 @@
 ### 1. 虚拟DOM
 
 简单说，虚拟DOM就是一个普通的JS对象。
-React 使用虚拟DOM使得开发者只需告诉React想让视图处于什么状态，而不必自己完成属性操作、事件处理、DOM更新等等，提升了开发效率。而虚拟DOM的diff 算法则使得React 不用每次都更新一整个DOM树，只需更新有变化的即可，减少了需要操作的DOM，提升了程序性能。虚拟DOM的另一大优势在于抽象了原本的渲染过程，实现了跨平台的能力。
+使用虚拟DOM，开发者只需决定想让视图处于什么状态，而不必自己完成属性操作、事件处理、DOM更新等等，提升了开发效率。而虚拟DOM的diff 算法则使得React 不用每次都更新一整个DOM树，只需更新有变化的即可，减少了需要操作的DOM，提升了程序性能。虚拟DOM的另一大优势在于抽象了原本的渲染过程，实现了跨平台的能力。
 
-virtual DOM 是React的一大亮点，具有batching(批处理)和高效的 Diff 算法。在React中，render 执行的结果得到的并不是真正的DOM结点，结果仅仅是轻量级的 JS对象，也就是 virtual DOM。React 基于 virtual DOM 自己实现了一套自己的事件机制，自己模拟了事件冒泡和捕获的过程，采用了事件代理，批量更新等方法，解决了各个浏览器的事件兼容性问题。
+virtual DOM 是React的一大亮点，具有batching(批处理)和高效的 Diff 算法。在React中，render 执行的结果得到的并不是真正的DOM结点，结果仅仅是轻量级的 JS对象，也就是 virtual DOM。React 基于 virtual DOM 实现了一套自己的事件机制，模拟了事件冒泡和捕获的过程，采用了事件代理，批量更新等方法，解决了各个浏览器的事件兼容性问题。
 
 一个 VitrualDom 可以简单的认为是：
 ```JS
@@ -174,7 +174,7 @@ react16前是递归的，是这个顺序。react16后改成fiber架构，是反�
 `setState`(`setState(updater, callback)`)的使用：
 1. 参数 1 为带有形参的 updater 函数： `(state, props) => statechange`，其中 state 和 props 都**保证为最新**，该函数的返回值会与 state 进行浅合并。
 2. 参数 2 为可选的回调函数，它将在 `setState` 完成合并并重新渲染组件后执行，通常建议使用 `componentDidUpdate()` 来代替此方式。
-3. 参数 1 除了接收函数外，还可以接受对象类型。这种形式的 `setState()` 也是是异步的，并且在同一周期内会对多个 `setState()` 进行批处理，后调用的 `setState()` 将覆盖同一周期内先调用的 `setState()` 的值。若后续状态取决于当前状态，则建议使用 updater 函数的形式代替：
+3. 参数 1 除了接收函数外，还可以接受对象类型。这种形式的 `setState()` 也是异步的，并且在同一周期内会对多个 `setState()` 进行批处理，后调用的 `setState()` 将覆盖同一周期内先调用的 `setState()` 的值。若后续状态取决于当前状态，则建议使用 updater 函数的形式代替：
    ```JS
     constructor(props) {
       super(props);
@@ -203,7 +203,7 @@ react16前是递归的，是这个顺序。react16后改成fiber架构，是反�
       });
     }
 
-    //对象参数“异步更新”，可以认为覆盖了前面所以偶函数参数对state 的更新，而对象参数更新后的函数参数更新则按照正常情况更新。render 中 this.state.num的值为３。
+    //对象参数“异步更新”，可以认为覆盖了前面所有函数参数对state 的更新，而对象参数更新后的函数参数更新则按照正常情况更新。render 中 this.state.num的值为３。
     handleClick() {
       this.setState({ num: this.state.num + 1 });
       this.setState({ num: this.state.num + 1 });
