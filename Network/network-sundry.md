@@ -14,6 +14,8 @@
     - [1.4.7 服务器推送：](#147-%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%8e%a8%e9%80%81)
     - [1.4.8 header压缩(HPACK算法)：](#148-header%e5%8e%8b%e7%bc%a9hpack%e7%ae%97%e6%b3%95)
   - [1.5 http/3](#15-http3)
+    - [1.5.1 零RTT建立连接](#151-%e9%9b%b6rtt%e5%bb%ba%e7%ab%8b%e8%bf%9e%e6%8e%a5)
+    - [1.5.2 连接迁移](#152-%e8%bf%9e%e6%8e%a5%e8%bf%81%e7%a7%bb)
 ### 1. http/1.0, http/1.1, http/2, http/3
 
 - http/0.9: 1991年发布，及其简单，只有一个 get 命令;
@@ -23,6 +25,8 @@
 - http/2.0: 2015年借鉴SPDY的 http/2 发布;
 
 ![http-history](/Image/http-history.png)
+
+![http-protocol](/Image/http-protocol.png)
 
 客户端可以在TCP三次握手第三个报文段中捎带HTTP请求，节省资源。
 
@@ -149,6 +153,7 @@ SSL/TLS 的功能实现主要依赖于三类基本算法：散列函数、对称
       - Server 收到加密的随机数后，使用私钥解密，获取到该随机数。向客户端发送信息：编码改变通知，Server 握手结束通知。
       - Client 和 Server 根据约定的算法，使用前面三个随机数生成对称密钥(session key)，用来加密接下来的整个对话过程。
 
+      SSL/TLS 完全握手需要至少两个TRR才能建立，简化握手需要1个RTT的握手延迟。TLS 协议层面也有一个队头阻塞，因为TLS协议都是按照 record 来处理数据的，将一堆数据放在一起(即一个 Record)加密，加密完后有拆分成多个TCP包传输。一般每个Record 16K, 包含 12 个TCP包，这样如果12个包中有任何一个包丢失，那么整个Record 都无法解密。
    2. SSL 连接建立完成，通信受到SSL保护，从此处开始进行应用层协议的通信，也就是发送HTTP请求。
 
 生成对话密钥需要三个随机数，但前两个随机数都有被窃听、篡改的可能，所以整个通话的安全，只取决于第三个随机数能否被破解。前两个随机数存在的原因是 SSL 协议不信任每个主机都能产生完全随机的随机数，若随机数不随机，则 pre master secret 就有可能被猜出来；而 Client 和 Server 的随机数加上 pre master secret 三个随机数一同生成的密钥就不容易被猜出了，一个伪随机可能不够随机，但三个伪随机就十分接近随机了。
@@ -293,9 +298,7 @@ http/2 服务器推送是 http/2 新增的另一个强大功能，借此服务�
 
 存在索引空间之后，header 的字段一共有以下几种表示方法：
 - 直接用索引值来表示。
-- 字段的 name 使用索引值来表示，value 使用原有字面的值的八位字节序列或者使用静态哈夫曼编码表示。
-
-
+- name 和 value 都用字符串表示，或其中之一用字符串表示。字符编码使用字节序列表示，要么直接使用字符的八位字节码要么使用哈夫曼编码。
 
 参考：
 - [深入理解 http2.0 协议，看这篇就够了](https://juejin.im/entry/5dba82c3e51d452a17370818)
@@ -304,9 +307,33 @@ http/2 服务器推送是 http/2 新增的另一个强大功能，借此服务�
 - [详解http-2头部压缩算法](https://segmentfault.com/a/1190000017011816)
 
 #### 1.5 http/3
-无论是SPDY还是http/2, 都是基于TCP的， TCP与UDP相比效率上存在天然的劣势。2013年google开发了基于UDP的名为QUIC(Quick UDP Internet Connections)的传输层协议,希望它能替代TCP， 使得网页传输更加高效。之后，IETF 正式将基于QUIC协议的HTTP重命名为HTTP/3。
+无论是SPDY还是http/2, 都是基于TCP的，TCP与UDP相比效率上存在天然的劣势(另一个原因在于继续在现有的TCP、TLS 协议之上实现一个全新的应用层协议，依赖与操作系统、中间设备还有用户的支持。部署成本非常高，阻力非常大)。2013年google开发了基于UDP的名为QUIC(Quick UDP Internet Connections)的传输层协议,希望它能替代TCP，使得网页传输更加高效。之后，IETF 正式将基于QUIC协议的HTTP重命名为HTTP/3。
+
+UDP 与TCP 相比效率更高但不具备传输可靠性，而QUIC便是看中UDP传输效率这一特性，并结合了TCP、TLS、HTTP/2 的优势，加以优化：
+![http/3-protocol](/Image/http3-protocal.png)
+
+因此想要了解 http/3, 主要需要了解QUIC的主要特性：
+##### 1.5.1 零RTT建立连接
+http/2 的连接需要3RTT, 考虑会话复用(缓存第一次握手的对称密钥)，需要2RTT。若TLS升级到1.3，则http/2 连接需要2RTT, 考虑会话复用需要1RTT。
+
+http/3 首次连接只需要1RTT, 后面的连接更是只需0RTT,意味这客户端发给服务器的第一个包就带有请求数据。QUCI的连接过程(DH密钥交换算法)：
+1. 首次连接，Client 发送Inchoate Client Hello 给 Server, 用于请求连接。
+2. Server 生成随机数g、p、a,根据他们算出A。然后将 g、p、A放到Server Config 中再发送Rejection 消息给Client。 
+3. Client 收到 g、p、A 后，自己再生成b, 根据 g、p、b 算出 B, 根据 A、p、b 算出初始密钥K。然后Client 使用 K 加密 http 数据，连同B一起发送给服务端。
+4. Server 收到B后，根据 a、p、B 生成与客户端相同的密钥，在用该密钥解密 HTTP 数据。为了进一步的安全(前向安全性)，Server 会更新自己的随机数 a和公钥，在生成新的密钥S, 然后把公钥通过Server Hello 发送给客户端。连同Server Hello 消息，还有HTTP 返回数据。
+5. Client 收到 Server Hello 后，生成与Server 一样的新密钥，后面的传输都使用S加密。
+
+因此，QUIC 从请求连接到正式接发HTTP数据一共花了1RTT，这1个RTT主要是为了获取Server Config, 后面的连接如果 Client 缓存了 Server Config, 那么就可以直接发送HTTP数据，实现0RTT建立连接。
+![QUIC-DH-algorithm](/Image/DH-algorithm.png)
+在密钥计算过程中，a 和 b 并不参与网络传输，安全性大大提高。而 p 和　g 是大数，即使　p、g、A、B 在传输中被劫持，那么靠现在的计算机算力也无法破解密钥。
+
+##### 1.5.2 连接迁移
+TCP连接基于四元组(源IP、源端口、目的IP、目的端口)，连接迁移指的是，当其中任何一个元素发生变化时，这条连接依然维持着，能够保持业务逻辑不中断。
 
 
 
 参考：
 - [http/3 原理实战](https://zhuanlan.zhihu.com/p/143464334)
+- [科普：QUIC协议原理分析](https://zhuanlan.zhihu.com/p/32553477)
+- [一文读懂 http/1 http/2 http/3](https://zhuanlan.zhihu.com/p/102561034)
+- [http/3 原理与实践](http://www.alloyteam.com/2020/05/14385/)
