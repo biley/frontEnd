@@ -16,7 +16,7 @@ const VitrualDom = {
 主流的虚拟DOM库，通常都有一个h函数，在React中也就是 `React.createElement`, JSX 只是 `React.createElement`的语法糖， React 通过 babel 将JSX转换为 `React.createElement`。
 
 ### 2. reconciliation
-"stack" reconciler 是 React15 及更早的解决方案；而 Filber 从 React 开始变成了默认的 reconciler， 但是 async 特性还没有默认开启。
+"stack" reconciler 是 React15 及更早的解决方案；而 Filber 从 React16 开始变成了默认的 reconciler， 但是 async 特性还没有默认开启。
 从某方面来看，我们可以认为 `render()` 函数创建了一个 react elements 的树;在下一次 `state` 或 `props` 更新时， 该 `render()` 函数会返回一个不同的树。React 需要基于这两棵树之间的差别来判断如何有效率的更新UI以保证当前UI与最新的树同步。
 
 这个算法问题有一些通用的解决方案，也就是生成将一棵树转换成另一棵树的最少操作。传统diff算法需要循环比较两棵树，所有结点的循环，单纯的比较次数就是O(n^2),找到差异后还要计算最小转换方式，最终结果为O(n^3);React 基于以下两个假设提出了一套O(n)的算法：
