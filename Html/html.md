@@ -134,3 +134,14 @@ sessionStorage 对象应该主要用于仅针对会话的小段数据的存储�
 
 参考：
 - [html5新标签总结](https://juejin.im/post/5c9b45256fb9a070fb370edd)
+
+### 3. 跨浏览器兼容
+优雅降级: web 站点在所有新式浏览器中都能正常工作，再对旧版本的 IE 进行降级处理。
+渐进增强：从被所有浏览器支持的基本功能开始，逐步添加新版本浏览器才支持的功能。
+
+内核：
+- Trident，IE 内核。
+- Gecko，Netscape, firefox 内核。
+- Presto，Opera 前内核，现改用 Google Chrome 的 Blink 内核。
+- Webkit， Safari 内核
+- Blink，webkit 的一个分支。Chrome，opera 内核。
