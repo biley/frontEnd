@@ -145,3 +145,23 @@ sessionStorage 对象应该主要用于仅针对会话的小段数据的存储�
 - Presto，Opera 前内核，现改用 Google Chrome 的 Blink 内核。
 - Webkit， Safari 内核
 - Blink，webkit 的一个分支。Chrome，opera 内核。
+
+### 4. Content-Type
+常用：
+- json: application/json
+- formData: multipart/form-data 发送内容中存在文件时会自动使用 form-data
+  - 使用 formData 时，会添加一个 boundary 参数。主要是作为参数边界，让服务器知道参数的开始和结束位置。类似的，使用 form 是，会以符号 `&` 来分隔。
+  - 直接检查 Formdata 会为空，通过其 .entries() 方法可以获取到一个 iterator，迭代该 iterator 可以获取到 FormData 的数据。
+- form: application/x-www-form-urlencoded  使用表单提交时的格式
+
+### 5. lang
+html 的 lang 属性，用来定义当前文档显示的语言。这个属性主要作用于浏览器和搜索引擎。
+在新的 xhtml 文档中，这个属性已经被 xml:lang 属性替代。
+设计 lang 属性是为了向用户提供语言特有的显示，使用 lang 属性后，真正受益的是搜索引擎，屏幕阅读器以及一些应用程序。
+
+一个影响是默认设为 en, 那么 chrome 中可以翻译为中文，这会导致一些字母或拼音被翻译。
+另一个看到是有的操作系统下会影响默认字体。
+
+参考：
+- [html 标签中 lang 属性以及 xml:lang 属性的作用](https://www.cnblogs.com/oray/p/3746688.html)
+- [html 的 lang 属性设置 zh-CN 好还是 en 好？](https://segmentfault.com/q/1010000005350758)

@@ -333,6 +333,8 @@ output 配置如何输出最终想要的代码，是一个 Object，包含了一
 #### 2.3 module
 module 配置如何处理模块。
 
+**url-loader 和 file-loader**
+
 **配置loader**：rules 配置模块的读取和解析规则，通常用来配置 loader。其类型是一个数组，数组中每一项都描述了如何去处理部分文件。
 ```js
 module: {

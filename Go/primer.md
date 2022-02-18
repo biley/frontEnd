@@ -285,7 +285,7 @@ type error interface {
 通常函数会返回一个 error 值，调用它的代码应当通过判断这个值是否等于 nil 来进行错误处理（为 nil 表示成功，非 nil 的 error 表示失败）。
 
 ### 16. 并发
-通过 go 关键字即可开启 goroutine，goroutine 是轻量级线程，它的调度是由 golang 运行时进行管理的。
+通过 go 关键字即可开启 goroutine，是由 golang 运行时管理的轻量级线程。
 
 go 语句可以开启一个新的运行期线程（goroutine），以一个不同的、新创建的 goroutine 来执行一个函数，同一个程序中所有 groutine 共享同一个地址空间。
 

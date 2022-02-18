@@ -173,6 +173,8 @@ SSL/TLS 的功能实现主要依赖于三类基本算法：散列函数、对称
 2. 加密、解密算法消耗 cpu 资源。
 3. 证书申请需要额外的费用。
 
+SNI 证书中配置多个域名的实现：https://www.barretlee.com/blog/2016/04/24/detail-about-ca-and-certs/
+
 参考：
 - [HTTP/1.0、HTTP/1.1、HTTP/2、HTTPS](https://zhuanlan.zhihu.com/p/43787334)
 - [深入理解HTTPS工作原理](https://juejin.im/post/5ca6a109e51d4544e27e3048#heading-1)
