@@ -30,3 +30,20 @@ CI/CD 通常指 continuous integration 和 continuous dlivery 或 continuous dep
 参考：
 - [前端工程化之CICD那点破事](https://juejin.cn/post/6870325047324573710)
 - [如何理解持续集成、持续交付、持续部署](https://www.zhihu.com/question/23444990)
+
+## PR 和 MR
+区别：
+- PR 一般在 github, MR 一般在 gitlab
+- PR 一般需要先 fork 目标仓库到自己的账号下，在进行开发
+- clone, add, commit, push 操作二者基本相同（PR 的 clone 一般需要加上对应的 remote）
+- push 之后，fork 的仓库需要仓库需要发起 pull request
+
+知乎上看到，PR 可以理解为：我改了你们的代码，你们拉回去看看吧！！！
+
+PR 的一个特殊的场景是，可以给自己没有权限的代码仓库提交分支合并请求（对一般开源项目，没有仓库权限，无法直接 push, 也无法在原始的开源项目中创建分支），这也会是 fork 的作用。如果是自己的仓库，那么 PR 和 MR 差别不大。
+
+参考： 
+- [Github 标准 Fork & Pull Request 流程](https://aaronflower.github.io/essays/github-fork-pull-workflow.html)
+- [PR 和 MR 的关联](https://zhuanlan.zhihu.com/p/463588556)
+
+

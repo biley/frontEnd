@@ -1276,6 +1276,8 @@ ES5 的 bind() 方法也实现函数柯里化，只要在 this 的值之后再�
 - for...in：主要用于遍历对象（通过对象可访问的可枚举的属性，通常都是开发者定义的属性），可以使用 break, continue, return 中断。遍历时无序(先从小到大输出整数key,在按创建顺序输出其他key)。
 - for...of: 主要用于实现了 iterator 遍历器的数据的遍历，可以使用 break, continue, return 中断。原生具备 iterator 接口的数据结构：Array、TypedArray、Map、Set、String、Arguments、NodeList对象。
 
+forEach，map 不能 break 或者 return 中断循环是因为循环体是写在回调函数中的，参考：[为什么forEach无法跳出循环](https://www.jianshu.com/p/bdf77ee23089)
+
 ### 18. 事件处理程序
 事件流包含三个阶段：事件捕获阶段，处于目标阶段，事件冒泡阶段。
 
@@ -1801,7 +1803,7 @@ git rebase 如何排查前端的性能问题
 
 polyfill 就是我们常说的刮墙用的腻子，polyfill 代码主要用于旧浏览器的兼容，比如说在旧的浏览器中没有内置 bind 函数，因此可以使用 polyfill 代码在就浏览器中实现新的功能。
 
-new Array() 创建的是一个稀疏数组，对于稀疏数组 map、filter、foreach 等方法并不会调用传入的第一个参数。解决办法是 new 之后再 fill() 一下。[new Array 无法使用 map 的原因与解决方法](https://www.jianshu.com/p/4b1eead30dd9)
+new Array() 创建的是一个稀疏数组，对于稀疏数组 map、filter、foreach 等方法并不会调用传入的第一个参数。解决办法是 new 之后再 fill() 一下。fill 的是[] 的话会引用到同一个[new Array 无法使用 map 的原因与解决方法](https://www.jianshu.com/p/4b1eead30dd9)
 
 参考：
 - [JS正则表达式完整教程](https://juejin.im/post/5965943ff265da6c30653879)
