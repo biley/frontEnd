@@ -2,14 +2,16 @@
 ### 1. 概念
 JS 中原有的表示集合的概念主要是 Array 和 Object，ES6 又添加了 Map 和 Set，用户还可以组合使用他们。这就需要一种统一的接口机制，来处理所有不同的数据结构。
 
-Iterator 是一种接口，为各种不同的数据结构提供统一的访问机制。任何数据只要部署 Iterator 接口，就可以完成遍历操作。
+**Iterator 是一种接口，为各种不同的数据结构提供统一的访问机制**。任何数据只要部署 Iterator 接口，就可以完成遍历操作。
 
 Ietrator 作用：
-1. 为各种数据结构，提供统一的、简便的访问接口；
+1. 为各种数据结构，提供统一的、简便的访问接口；原生具备 Iterator 接口的数据结构：Array,Map,Set,String,TypedArray,arguments,NodeList。
 2. 使得数据结构的成员能够按照某种次序排列。
 3. ES6 提供了一种新的遍历命令 for...of 循环，Iterator 接口主要供 for...of 消费。
 
-Iterator 主要使用 next 方法进行遍历，模拟 next 方法返回值：
+object 没有默认部署 iterator 接口，主要是因为不确定遍历顺序；相对的，Map 的遍历顺序就是插入顺序。
+
+Iterator 主要使用 next 方法进行遍历，模拟 next 方法，返回的是一个包含 value 和 done 的对象：
 ```js
 var it = makeIterator(['a', 'b']);
 
@@ -29,10 +31,13 @@ function makeIterator(array) {
   };
 }
 ```
-可以看出，Ietrator 只是把接口规格加到数据结构之上，所以，遍历器与它所遍历的那个数据结构实际上时分开的。
+可以看出，Ietrator 只是把接口规格加到数据结构之上，所以，遍历器与它所遍历的那个数据结构实际上是分开的。
 
 ### 2. 默认 Ietrator 接口
-ES6 规定，默认的 Iterator 接口部署在数据结构的 `Symbol.iterator` 属性中，即一个数据结构，只要具有 `Symbol.iterator` 属性，就可以认为是 iterable（可遍历的）。对象之所以没有默认部署 Iterator 接口，是因为对象哪个属性先遍历，哪个后遍历是不确定的，需要开发者手动指定。
+
+使用 for...of 遍历某种数据结构时，会自动寻找 Iterator 接口。一种数据结构只要部署了 Iterator 接口，就称这种数据结构是可遍历的（iterable）。
+
+ES6 规定，默认的 Iterator 接口部署在数据结构的 `Symbol.iterator` 属性中，即一个数据结构，只要具有 `Symbol.iterator` 属性，就可以认为是 iterable（可遍历的）。
 
 Symbol.iterator:
 1. Symbol.iterator 属性本身是一个函数，就是当前数据默认的遍历器生成函数。执行这个函数，就会返回一个遍历器。`[][Symbol.iterator]().next() //{value: undefined, done: true}`。

@@ -15,6 +15,7 @@
     - [15.1 height: auto](#151-height-auto)
     - [15.2 height + padding-bottom](#152-height--padding-bottom)
     - [15.3 使用 vw 或 vh 设置宽高](#153-使用-vw-或-vh-设置宽高)
+  - [杂项](#杂项)
 
 ***
 ### 1. 居中
@@ -495,6 +496,11 @@ padding 和 margin 设置为百分数时是根据父元素的宽度计算的百�
 }
 ```
 #### 15.3 使用 vw 或 vh 设置宽高
+
+### 杂项
+1. table 中的 td 高度随内容自适应，但是 td 中所有 div 高度都要撑满 td。正常情况下，猜测是因为渲染时 td 的高度会随着后面内容变化，所以无法知道具体高度导致 `height: 100%` 无效。这种情况可以给 table 设置 `height: 1px`解决，然而为什么能 work 还不知道。
+
+如果给 td 设置了固定高度，则内部的 div 就有了一个 parent 来计算百分比高度。而 td 内部的高度大于了 td 本身的高度的话，td 会自动变高，内部百分比计算的 div 也会随着变高（给 table 设置应该也是差不多的原理）。
 
 参考：
 - [如何使用纯 css 实现固定宽高比 div](https://blog.csdn.net/weixin_33727510/article/details/91435891)

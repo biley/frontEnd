@@ -1,3 +1,4 @@
+# webpack
 ### 1.webpack
 webpack：一个现代JavaScript 应用程序的静态模块打包器
 
@@ -33,7 +34,7 @@ webpack 是一个打包模块化 js 的工具，它会从入口文件出发，�
    ```
    这种方法的问题在于：
    - 会发出多个请求
-   - 需要考虑加载顺序
+   - 需要考虑加载顺序(有依赖需要同步加载)
    - 所有的脚本会共用同一个全局作用域
    
    共用同一个作用域会导致命名冲突，可以命名使用空间来解决(使用对象包裹)：
@@ -71,7 +72,7 @@ webpack 是一个打包模块化 js 的工具，它会从入口文件出发，�
 2. 模块化方案进化史
    -- AMD -- commonJS -- ES6 module
 
-   AMD(Asynchronous Module Definition) 异步模块定义：
+   AMD(Asynchronous Module Definition) 异步模块定义（require.js）：
    - 使用 define 和 require。
    - 它显示地表达了每个模块依赖的其他模块，且模块的定义不再绑定到全局对象上。
 
@@ -161,6 +162,10 @@ webpack 是一个打包模块化 js 的工具，它会从入口文件出发，�
    - version: 特定版本
    - ~version: 小版本，只能改变最末尾那段。 1.15.2 <= ~1.15.2 < 1.16.0
    - ^version: 中版本和小版本，除了大版本号都可以改变。 3.3.4 <= ^3.3.4 < 4.0.0
+
+   第一位代表主版本：更新API(不兼容)
+   第二位代表服版本：增加功能（向下兼容）
+   的三位代表不定版本：修复 bug（向下兼容）
 
    scripts: npm提供的脚本命令功能。可以分为两种：
    1. npm 自己的生命周期命令，即在包的发布和安装过程中，允许开发者写的钩子，如 preinstall, postinstall, prepublish, postpublish等等。
@@ -895,8 +900,47 @@ Scope Hoisting 需要分析出模块之间的依赖关系，因此源码必须�
 2. 生成 stats.json 文件。
 3. 在项目根目录执行 webpack-bundle-analyzer 后，浏览器会打开对应网页。
 
-
-
 参考：
 - [webpack 优化](http://webpack.wuhaolin.cn/4%E4%BC%98%E5%8C%96/)
 - [webpack 升级优化小记：happy+dll 初体验](https://juejin.cn/post/6844903734007300109)
+
+# AMD
+AMD（Asynchronous Module Definition）异步模块定义，可以认为是一个模块化的开发规范，是一种思路和概念。而 require.js 则是它的一个具体实现。
+
+# UMD
+UMD(Universal Module Definition)通用模块定义，希望提供一个前后端跨平台的解决方案（支持 AMD 和 CommonJS 模块方式）
+
+UMD 是实现很简单（根据当前支持选择对应的模块，是 else if 的关系，不是顺序；三者只会出现一种情况）：
+- 是否支持 Node.js 模块格式（exprots 和 module），存在则使用
+- 是否支持 AMD（define 和 define.amd），存在则使用
+- 判断是否支持 exports
+- 都不支持则将模块公开到全局。
+
+webpack 的打包结果：
+```js
+(function webpackUniversalModuleDefinition(root, factory) {
+  if (typeof exports === 'object' && typeof module === 'object')
+    module.exports = factory();
+  else if (typeof define === 'function' && define.amd) define([], factory);
+  else if (typeof exports === 'object') exports['MyLibrary'] = factory();
+  else root['MyLibrary'] = factory();
+})(global, function () {
+  return _entry_return_;
+});
+
+```
+
+### webpack UMD 打包配置
+```js
+module.exports = {
+  output: {
+    library: {
+      name: 'MyLibrary', //省略会导致入口起点返回的所有属性直接赋值给跟对象
+      type: 'umd'
+    }
+  }
+  externals: {
+    react: 'react' // lego 这里需要和自定义组件使用同一个组件，否则 hooks 不能使用。 
+  }
+}
+```

@@ -62,6 +62,12 @@
     - [1.3 执行环境细节](#13-执行环境细节)
     - [1.4 变量对象(variable object)](#14-变量对象variable-object)
     - [1.5. 作用域链](#15-作用域链)
+- [1. 执行环境(execution context)](#1-执行环境execution-context)
+    - [1.1 执行环境理解](#11-执行环境理解)
+    - [1.2 执行环境栈](#12-执行环境栈)
+    - [1.3 执行环境细节](#13-执行环境细节)
+    - [1.4 变量对象(variable object)](#14-变量对象variable-object)
+    - [1.5. 作用域链](#15-作用域链)
 - [2. 闭包](#2-闭包)
 - [3. 创建对象](#3-创建对象)
 - [4. 继承](#4-继承)
@@ -702,6 +708,9 @@ function deepCopy(target) {
 
 ### 11. var、let、const
 ES5 只有 var 和 function 两种声明变量的方法；而 ES6 中有 var、let、const、function、improt 和 class 共6中声明变量的方法。
+
+不使用 var、let 等声明直接使用的变量会被认为是全局变量，且严格模式下会报错。
+
 var：
 1. 作用域为该语句所在的函数内。
 2. 存在变量提升现象:
@@ -1798,12 +1807,31 @@ js 为什么单线程 块作用域 bind let const var this 原型链 构造 设�
 git rebase 如何排查前端的性能问题
 负数的有符号右移 `>>` 相比于 `/2` 为向负取整(`-9 >> 2 = -5`)，原码->反码->补码->移位->反码-> 补码，负数在计算机中以反码存储。无符号右移`>>>`则会连带符号一起右移。
 
+羽毛球刚开始觉得挺累的，不知是紧张还是怎么的，鞋也不太适应。不过后面放松下来，鞋也差不多了，就也还挺开心的。如果没有后面那顿饭的话，就应该是一个很正常的结局，心里也不会这么乱了。是呀，到那里结束的话，一切正好又是平静舒适的一天。
+现在看来是不是我自己想多了呀。不过有一点是确定的，当时的我退缩了，一直这样，在关键的时候退缩了，害怕踏出那一步，在有意无意的避开那些话题。
+前面打车回来也是，没有好好分享自己，顾虑太多，其实不是不想，现在想来应该是知道快到了，可能说不完就干脆不说，结果反而传达了错误的意思吧。
+啊啊啊啊啊。。结果后面这么多的事情都好烦人，心里一直胡思乱想，昨晚都没有睡好觉，是不是要主动想什么方法去解决才行呀。
+不过有一点倒是，当天晚上反而睡得挺好的，可能是吉他课的关系吧，第二天也一直在练吉他。直到上完课回来，就有些不对了，没有了比较重要的事，心里就慢慢停不下来了，到今天上午还一直在想这些事，真的是好烦呀。。。
+其实现在想来可能都是自己多想了，本来就只是单纯的聊天的，不过确实是错了机会了。
+不要急不要急，给时间以时间。
+但是心理又像之前一样，对不了解的人多了好多想象。
+
 杂项：
 在函数内部可以通过函数名来引用函数，对于匿名函数，唯一从内部引用自身的方式是使用 arguments.callee (已弃用)。
 
 polyfill 就是我们常说的刮墙用的腻子，polyfill 代码主要用于旧浏览器的兼容，比如说在旧的浏览器中没有内置 bind 函数，因此可以使用 polyfill 代码在就浏览器中实现新的功能。
 
 new Array() 创建的是一个稀疏数组，对于稀疏数组 map、filter、foreach 等方法并不会调用传入的第一个参数。解决办法是 new 之后再 fill() 一下。fill 的是[] 的话会引用到同一个[new Array 无法使用 map 的原因与解决方法](https://www.jianshu.com/p/4b1eead30dd9)
+
+采用 dom.appendChild 插入的 script 节点，会立即下载 js 文件并运行；而 dom.innerHtml = '<script src='demo.js'></script>'只是插入了字符串，不会下载并执行。
+
+ndjson
+```js
+api.headers['content-type'] = 'application/x-ndjson'
+let param1 = { "index": ["billions-main.manager.lego-service-@*"], "ignore_unavailable": true, "preference": 1670309835961 }
+let param2 = { "version": true, "size": 5000, "sort": [{ "@timestamp": { "order": "desc", "unmapped_type": "boolean" } }], "query": { "bool": { "must": [{ "query_string": { "query": "log:\"/api/requestProxy\"", "analyze_wildcard": true } }, { "range": { "@timestamp": { "gte": 1670313319991, "lte": 1670314219991, "format": "epoch_millis" } } }], "must_not": [] } }, "_source": { "excludes": [] }, "aggs": { "2": { "date_histogram": { "field": "@timestamp", "interval": "30s", "time_zone": "Asia/Shanghai", "min_doc_count": 1 } } }, "stored_fields": ["*"], "script_fields": {}, "docvalue_fields": ["@timestamp"], "highlight": { "pre_tags": ["@kibana-highlighted-field@"], "post_tags": ["@/kibana-highlighted-field@"], "fields": { "*": { "highlight_query": { "bool": { "must": [{ "query_string": { "query": "log:\"/api/requestProxy\"", "analyze_wildcard": true, "all_fields": true } }, { "range": { "@timestamp": { "gte": 1670313319991, "lte": 1670314219991, "format": "epoch_millis" } } }], "must_not": [] } } } }, "fragment_size": 2147483647 } }
+api.data = `${JSON.stringify(param1)}\n${JSON.stringify(param2)}\n`
+```
 
 参考：
 - [JS正则表达式完整教程](https://juejin.im/post/5965943ff265da6c30653879)
