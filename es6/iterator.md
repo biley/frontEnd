@@ -11,6 +11,8 @@ Ietrator 作用：
 
 object 没有默认部署 iterator 接口，主要是因为不确定遍历顺序；相对的，Map 的遍历顺序就是插入顺序。
 
+遍历器对象的本质是一个指针对象，使用 next 方法可以让对象的指针属性指向数据结构的下一个成员。
+
 Iterator 主要使用 next 方法进行遍历，模拟 next 方法，返回的是一个包含 value 和 done 的对象：
 ```js
 var it = makeIterator(['a', 'b']);
@@ -37,10 +39,17 @@ function makeIterator(array) {
 
 使用 for...of 遍历某种数据结构时，会自动寻找 Iterator 接口。一种数据结构只要部署了 Iterator 接口，就称这种数据结构是可遍历的（iterable）。
 
+```js
+let arr = [1,2,3]
+let iter = arr[Symbol.iterator]()
+iter.next()
+iter.next()
+```
+
 ES6 规定，默认的 Iterator 接口部署在数据结构的 `Symbol.iterator` 属性中，即一个数据结构，只要具有 `Symbol.iterator` 属性，就可以认为是 iterable（可遍历的）。
 
 Symbol.iterator:
-1. Symbol.iterator 属性本身是一个函数，就是当前数据默认的遍历器生成函数。执行这个函数，就会返回一个遍历器。`[][Symbol.iterator]().next() //{value: undefined, done: true}`。
+1. Symbol.iterator 属性本身是一个函数，就是当前数据默认的遍历器生成函数。执行这个函数，就会返回一个遍历器对象。`[][Symbol.iterator]().next() //{value: undefined, done: true}`。
    ```js
    function Obj() {};
    Obj.prototype[Symbol.iterator] = function() {
@@ -52,5 +61,20 @@ Symbol.iterator:
    }
    ```
 2. 属性名 Symbol.iterator 是一个表达式，返回 Symbol 对象的 iterator 属性，这是一个预定义好的、类型为 Symbol 的特殊值，所以需要放在方括号内。
+3. 给对象添加 Iterator 接口
+```js
+let obj = {
+  data: []
+  [Symbol.iterator]() {
+    let index = 0;
+    let that = this //this trick
+    return {
+      next() {
+        return index >= that.data.length ? {value: undefined, done: true} : {value: that.data[index++], done: false} // index 记得自增
+      }
+    }
+  }
+}
+```
 
 Symbol.iterator() 方法最简单的实现，还是使用 Generoator 函数。

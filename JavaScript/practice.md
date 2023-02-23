@@ -40,5 +40,58 @@ const transformToObj = index => {
   return obj
 }
 console.log(JSON.stringify(transformToObj(0)))
+```
+4. 模拟 bind 实现
+```js
+//不考虑当做构造函数使用
+Function.prototype.myBind = (context) => {
+  const that = this
+  if(typeof that !== 'function') {
+    throw new TypeError('Function.prototype.myBind: what is to be bind is not a function')
+  }
+  const args = Array.prototype.slice.call(arguments, 1)
+  return function () {
+    const bindArgs = Array.prototype.slice.call(arguments)
+    return that.apply(context, args.concat(bindArgs))
+  }
+}
 
+//考虑构造函数
+Function.prototype.myBind = (context) => {
+  const that = this
+  if(typeof that !== 'function') {
+    throw new TypeError('Function.prototype.myBind: what is to be bind is not a function')
+  }
+  const args = Array.prototype.slice.call(arguments, 1)
+  const bindF = function() {
+    const bindArgs = Array.prototype.slice.call(arguments)
+    //除了 instanceof，使用 new.target 应该也是一样的
+    return that.apply(this.instanceof bindF ? this : context , args.concat(bindArgs))
+  }
+  //原型对象应该是被调用函数的原型，但是这样bindF.prototype 的修改会影响到原函数
+  bindF.prototype = that.prototype
+  //这样可以避免影响
+  bindF.prototype = Object.create(that.prototype)
+  return bindF
+}
+
+```
+
+5. 实现 promise.all
+```js
+Promise.prototype.all = (PromiseArr) => {
+  return new Promise((resolve, reject) => {
+    const result = []
+    for(let i = 0; i < promiseArr.lenght; i++) {
+      Promise.resolve(promiseArr[i]).then(data => {
+        result[i] = data
+        if(result.length === promiseArr.length) {
+          resolve(result)
+        }
+      }).catch(err => {
+        reject(err)
+      })
+    }
+  })
+}
 ```

@@ -51,6 +51,9 @@
   - [28.1 window 对象](#281-window-对象)
   - [28.2 location 对象](#282-location-对象)
 - [29 setTimeout 和 setInterval](#29-settimeout-和-setinterval)
+- [29 同步、异步 与 阻塞、非阻塞](#29-同步异步-与-阻塞非阻塞)
+- [30 event loop](#30-event-loop)
+  - [30.1 node event loop](#301-node-event-loop)
 ### 1. 执行环境(execution context)
 ##### 1.1 执行环境理解
 执行环境是 ECMA-262 中用以区分不同的可执行代码的抽象概念。可执行代码可以分为:
@@ -115,6 +118,9 @@
   - [28.1 window 对象](#281-window-对象)
   - [28.2 location 对象](#282-location-对象)
 - [29 setTimeout 和 setInterval](#29-settimeout-和-setinterval)
+- [29 同步、异步 与 阻塞、非阻塞](#29-同步异步-与-阻塞非阻塞)
+- [30 event loop](#30-event-loop)
+  - [30.1 node event loop](#301-node-event-loop)
 
 当程序的执行流进入到一个可执行的代码时，就进入了一个执行环境中。
 
@@ -132,7 +138,7 @@ ExecutionContextObj = {
 ```
 每当一个函数被调用的时候，就会随之创建一个执行环境，在 JS 解释器内部处理执行环境有两个步骤：
 1. 调用阶段(函数被调用之后，函数体执行之前)
-   - 扫描执行上下文中的形参、函数以及变量，并依次填充变量(活动)对象的属性
+   - 扫描执行上下文中的形参、函数以及变量，并依次填充活动对象的属性
 
       形参 —— 形参：实参 || undefined
 
@@ -165,7 +171,7 @@ ExecutionContextObj = {
    fun()
    ```
 
-还可以认为有一个阶段，调用函数前，创建函数时，会创建一个预先包含外部和全局变量(活动)对象的作用域链，保存在内部的 `[[Scope]]` 属性中。在调用时再复制其中的对象构建执行环境的作用域链，此后，又一个活动对象被创建并被推入作用域链的前端。因此，调用的时候才创建作用域链，但是作用域链的内容和创建是的位置有关。(这应当也是闭包的原理)
+还可以认为有一个阶段，调用函数前，创建函数时，会创建一个预先包含外部和全局活动对象的作用域链，保存在内部的 `[[Scope]]` 属性中。在调用时再复制其中的对象构建执行环境的作用域链，此后，又一个活动对象被创建并被推入作用域链的前端。因此，调用的时候才创建作用域链，但是作用域链的内容和创建时的位置有关。(这应当也是闭包的原理)
 
 从这里也可以清楚的知道 JS 中的变量、函数**声明提升**的原理。
 
@@ -288,7 +294,16 @@ ExecutionContextObj = {
 
    **稳妥对象**指没有公共属性，其方法也不引用 `this` 的对象，该对象最适合在一些安全的环境(禁止使用 `this` 和 `new` )中使用,或防止数据被其他应用程序改动。该模式与寄生构造函数模式的区别在于不使用 `new` 操作符调用构造函数，新创建对象的实例方法也不引用 `this`。
 
-   在该构造函数中定义的私有变量，通过创建的对象的方法进行访问(类似闭包)，而即使有代码再给对象实例添加方法或数据成员，也没有其他属性和方法可以访问到这些参数，这种安全性使得它非常适合在某些安全执行环境下使用。
+   在该构造函数中定义的私有变量(传入构造函数的原始数据)，通过创建的对象的方法进行访问(类似闭包)，而即使有代码再给对象实例添加方法或数据成员，也没有其他属性和方法可以访问到这些参数，这种安全性使得它非常适合在某些安全执行环境下使用。
+   ```js
+   function Person(name,age,job) {
+     var obj = new Object()
+     //原始数据不给到对象，而是直接访问
+     obj.sayname = function(){
+       console.log(name)
+     }
+   }
+   ```
 
 ### 4. 继承
 许多OO语言都支持两种继承方式：
@@ -582,7 +597,8 @@ call()、apply() 和 bind() 都可以用来指定 this 的绑定对象：
 bind 使用：
 1. bind() 函数的一个用处在于能使一个函数拥有预设的初始参数，即“内定”前几个参数。
 2. 因为 bind() 返回的结果依然是 function, 因此可以被　new　运算符调用，此时 bind 的第一个参数无效。
-3. setTimeout 中常出现隐式丢失的情况，此时除了使用引号包裹函数(如："obj.fn()", 相当于执行了引号中的语句，this 不会丢失，但 obj 需要是全局变量)，也可以使用 bind 再次显示绑定 this。引号只是单纯包裹函数的时候指向全局作用域中的函数，不使用引号包裹则是一个单纯的变量。
+3. bind 方法所返回的函数并不包含 prototype 属性，并且将这些绑定的函数用作构造函数所创建的对象从原始的未绑定的构造函数中继承 prototype。也就是创建的对象的 __proto__ 指向原函数的  prototype。
+4. setTimeout 中常出现隐式丢失的情况，此时除了使用引号包裹函数(如："obj.fn()", 相当于执行了引号中的语句，this 不会丢失，但 obj 需要是全局变量;直接写 obj.fn 则 this 不会指向 obj)，也可以使用 bind 再次显示绑定 this。引号只是单纯包裹函数的时候指向全局作用域中的函数，不使用引号包裹则是一个单纯的变量。
 
 new 操作符模拟实现：
 ```js
@@ -658,6 +674,7 @@ if (!Function.prototype.bind) {
 - [理解 javascript 里的 bind() 函数](https://www.webhek.com/post/javascript-bind.html)
 - [js的new操作符的实现](https://juejin.im/post/5bde7c926fb9a049f66b8b52#heading-5)
 - [MDN bind](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
+- [javascript 深入之模拟 bind 的实现](https://github.com/mqyqingfeng/Blog/issues/12)
 
 ### 9. 理解参数
 1. ECMAScript 中的参数在内部是用一个数组来表示的，函数接收到的始终都是这个数组，而不关心其中参数具体个数以及类型。
@@ -776,13 +793,26 @@ const:
 ### 12. 数据类型
 
 ES6引入了新的原始数据类型 Symbol,因此当前共七种数据类型：
-- 基本类型：Undefined、Null、Boolean、String、Number、Symbol。
+- 基本类型：Undefined、Null、Boolean、String、Number、Symbol、bigint。
 - 引用类型：Object。
+
+**基本包装类型**
+
+Boolean、Number、String 是3种比较特殊的基本类型。基本类型不是对象，因此从逻辑上将不应该有方法。但为了操作方便，从内存中读取基本类型的值的时候，后台会自动完成：
+1. 创建一个基本包装类型的的实例
+2. 在实例上调用指定的方法
+3. 销毁实例
+
+因此：
+1. 给基本类型添加属性时不会报错，但也无法再次访问，因为实例已经销毁了。
+2. instanceof 不是方法，而是操作符所以无效
+
+数字字面量不能直接用点号调用方法是因为可能是小数，其他三种基本类型可以直接可以调用。
 
 **typeof**
 
 typeof 返回值：
-- 基本类型：undefined、boolean、string、number、symbol；基本类型中只有 Null 的typeof 结果不同，为 object。
+- 基本类型：undefined、boolean、string、number、symbol、bigInt；基本类型中只有 Null 的typeof 结果不同，为 object。
 - 引用类型：object、function；相比引用类型，多了一个 function。
 
 在函数内部，可以使用 typeof 操作符来检测需要的属性是否存在。
@@ -795,19 +825,38 @@ typeof 返回值：
 
 所以 instanceOf 一般用来检测对象类型，以及继承关系。而相对的 typeOf 可以用来识别一些基本类型。
 
+```js
+Object instanceof Object //true
+//Object 是一个构造函数
+Object.__proto__ === Function.prototype
+Function.prototype.__proto__ === Object.prototype
+//就会有些奇怪
+Object.__proto__.__proto__ === Object.prototype
+new Object().__proto__ === Object.prototype
+```
+
 **Object.prototype.toString.call**
 
 该方法得出结果的过程可以分为两步：
 1. 获取参数的类型 type
-2. 将参数类型和其他字符串组合为  `` `[object ${type}]` ``
+2. 将参数类型和其他字符串组合为  `[object ${type}]`,使用 .slice(8, -1).toLowerCase() 获取
 
 这个方法可以较全的判断 js 的数据类型。
+```js
+function getType(param) {
+  let type = Object.prototype.toString.call(param).slice(8, -1)
+  if(type === 'Object' && param.constructor && param.constructor.name) {
+    type = param.constructor.name
+  }
+  return type
+}
+```
 
 **Undedined 和 Null**
 
 Undefined类型：
 1. Undefined 类型只有一个值，也就是 undefined。当声明了变量但未对其进行初始化时，其值就为 undefined。
-2. 对未声明过的变量，只能使用 typeof 操作符。 对未初始化和未声明的变量使用 typeof 操作符都会放回 undefined。但要注意， 在let 或const 的暂时性死区现象中，使用 typeof 操作符同样也会报错。
+2. 对未声明过的变量，只能使用 typeof 操作符。 对未初始化和未声明的变量使用 typeof 操作符都会返回 undefined。但要注意， 在let 或const 的暂时性死区现象中，使用 typeof 操作符同样也会报错。
 3. undefined 是一个表示'无'的原始值，转为数值时为NaN： `Number(undefined)`、`3 + undefined`； 而 null 是一个表示 "无" 的对象，转为数值时为0。
 
 4. 判断 undefined: `if (props === void 0) { props = {}; }`
@@ -817,6 +866,7 @@ Null 类型：
 2. 实际上，undefined 派生自 null 值，对他们的相等性测试("==")要返回true。
 3. 若对应的变量准备在将来用于保存对象，则最好将其初始化为null,这样，只要检测null值就可以知道相应的变量是否已经保存了一个对象的引用。而相对的，一般是没有必要将一个变量的值显示设置为 undefined。
 4. 判断 null: `exp === null`。
+5. `null instanceof null // TypeError: Right-hand side of 'instanceof' is not an object` js 历史遗留 bug
 
 参考：
 - [js 类型判断](https://www.jianshu.com/p/ddc7f189d130)
@@ -1359,7 +1409,7 @@ class 特点：
   Point === Point.prototype.construcotr;  //true
   ```
 - Class 不支持变量提升，因为继承时，必须保证子类在父类之后定义。
-- `new.target` 可以用来判断函数是否通过 new 操作符调用(实际应该就是 instanceof  的语法糖)
+- `new.target` 可以用来判断函数是否通过 new 操作符调用(实际应该就是 instanceof  的语法糖),在函数中直接使用即可。new 调用的会指向函数本身，否则值为 undefined。
 - 实例属性有新写法，除了定义在 constructor 方法里面的 this 上面，也可以定义在类的最顶层。
 
 ### 20. Class 继承
@@ -1801,6 +1851,27 @@ function myClearInterval(timer) {
 参考：
 - [用 setTimeout 和 clearTimeout 简单实现 setInterval 与 clearInterval](https://juejin.cn/post/6844903839934447629)
 
+
+### 29 同步、异步 与 阻塞、非阻塞
+同步异步主要可以理解为被调用方的行为：
+- 同步需要调用方等待或轮询访问结果
+- 异步则是被调用方执行完毕之后，通过状态变化、通知等主动通知调用方
+阻塞、非阻塞可以理解为调用方的行为：
+- 阻塞指调用方一直等待结果，不做其他任务
+- 非阻塞指调用方在被调用方执行期间可以做其他任务
+
+同步非阻塞：比如调用方可以在执行其他任务，每隔一段时间去访问被调用方是否完成任务。
+
+### 30 event loop
+
+单线程在保证执行顺序的同时，也限制了 js 的执行效率。因此开发出了 web worker 技术，号称让 js 称为一门多线程语言。web work 的多线程有着诸多限制：所有线程都收主线程控制，不能独立执行，所以这些线程实际上应属于主线程的子线程；这些子线程并没有独立的 I/O 操作的权限，只能分担一些诸如计算等任务。所以严格来说，这些子线程并没有完整的功能。
+
+当定时器嵌套超过5层，且 timeout 小于 4ms，会设置 timeout 为 4ms(即 timeout >= 4ms),不同浏览器会有不同。另外 timeout 和 0 和 1 的行为可能是一致的，需要避免这样设置来控制顺序。
+
+#### 30.1 node event loop
+
+参考：
+- [详解 js 中的 event loop 机制](https://zhuanlan.zhihu.com/p/33058983)
 
 ajax fetch
 js 为什么单线程 块作用域 bind let const var this 原型链 构造 设计模式　

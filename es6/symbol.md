@@ -85,6 +85,9 @@ Symbol.keyFor(s); //foo
 
 Symbol.for() 的这个全局登记特性，可以在不同的 iframe 或 service worker 中取到同一个值。(这是否可以用来在 iframe 间传递数据？)
 
+### 5. 内置的 Symbol 值
+Symbol.hasInstance、Symbol.species、Symbol.iterator 等。
+
 ### Symbol 使用 
 1. 对象属性，根据情况考虑要不要使用 Symbol.for()
 2. 消除魔术字符串
